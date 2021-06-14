@@ -118,15 +118,16 @@
 -keep class com.baidu.speechsynthesizer.**{*;}
 -keep class com.baidu.aip.**{*;}
 
+-keep class com.worth.bluetooth.base.core.bean.**{*;}
 -keep class com.worth.bluetooth.base.network.bean.**{*;}
--keep class  com.worth.bluetooth.base.core.utils.**{*;}
--keep class  com.worth.bluetooth.base.network.**{*;}
--keep class  com.worth.bluetooth.business.enter.**{*;}
--keep class  com.worth.bluetooth.business.ext.ContactsKt{*;}
--keep class  com.worth.bluetooth.business.ext.ToAppContactsCodes{*;}
--keep class  com.worth.bluetooth.base.core.storage.**{*;}
--keep class  com.tencent.mmkv.**{*;}
--keep class  okhttp3.**{*;}
+-keep class com.worth.bluetooth.base.core.utils.**{*;}
+-keep class com.worth.bluetooth.base.network.**{*;}
+-keep class com.worth.bluetooth.business.enter.**{*;}
+-keep class com.worth.bluetooth.business.ext.ContactsKt{*;}
+-keep class com.worth.bluetooth.business.ext.ToAppContactsCodes{*;}
+-keep class com.worth.bluetooth.base.core.storage.**{*;}
+-keep class com.tencent.mmkv.**{*;}
+-keep class okhttp3.**{*;}
 
 # Retrofit does reflection on generic parameters. InnerClasses is required to use Signature and
 # EnclosingMethod is required to use InnerClasses.

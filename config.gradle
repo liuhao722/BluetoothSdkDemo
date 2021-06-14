@@ -22,6 +22,10 @@ ext {
             applicationId    : "com.bbyx.darwin1",
     ]
 
+    self = [
+            "core"      : "com.github.liuhao722:YZCore:0.0.4-SNAPSHOT",
+    ]
+
     httpDependencies = [
             "retrofit"         : "com.squareup.retrofit2:retrofit:" + RETROFIT_CODE,
             "converter-scalars": "com.squareup.retrofit2:converter-scalars:" + RETROFIT_CODE,
