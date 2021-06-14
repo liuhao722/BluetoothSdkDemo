@@ -1,8 +1,5 @@
 package com.worth.bluetooth.business.enter
 
-import com.worth.bluetooth.base.core.storage.MeKVUtil
-import com.worth.bluetooth.base.core.utils.application
-
 /**
  * Author:  LiuHao
  * Email:   114650501@qq.com
@@ -10,14 +7,6 @@ import com.worth.bluetooth.base.core.utils.application
  * Description: This is VipSdkHelper
  */
 class PadSdkHelper private constructor() {
-    /**
-     * 初始化操作
-     */
-    init {
-        application?.let {
-            MeKVUtil.initMMKV(it)
-        }
-    }
 
     /**
      * 初始化sdk
@@ -37,7 +26,7 @@ class PadSdkHelper private constructor() {
     /**
      * 设置使用设备的类型
      */
-    fun setPhoneType() {
+    fun setPhoneType(isPad: Boolean = true) {
 
     }
 

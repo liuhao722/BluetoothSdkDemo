@@ -1,9 +1,3 @@
 <resources>
-    <string name="app_name">i会员-语音sdk</string>
-
-    <!-- 自定义配置语音助手回复部分，查不到服务端内容的话，默认回复的内容-->
-    <string name="str_sdk_def_ref">你好，我不知道</string>
-    <!-- 自定义配置语音助手回复部分,唤醒的语音助手的回复部分-->
-    <string name="str_sdk_def_wakeup_ref">在呢</string>
-
+    <string name="app_name">i会员-蓝牙sdk</string>
 </resources>

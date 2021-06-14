@@ -91,5 +91,6 @@ dependencies {
     kapt rootProject.ext.dependencies["ARouter-compiler"]
     annotationProcessor rootProject.ext.dependencies["ARouter-compiler"]
 
+    implementation rootProject.ext.self["core"]
 
 }

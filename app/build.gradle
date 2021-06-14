@@ -87,3 +87,17 @@ dependencies {
     implementation autosize
 
 }
+
+def isDebug = true
+dependencies {
+    implementation fileTree(dir: "libs", include: ["*.jar"])
+    if (isDebug) {
+        api project(':bluetooth')
+//        api files('libs/framework-release.aar')
+    } else {
+//        implementation rootProject.ext.self["core"]
+//        implementation rootProject.ext.self["appSdk"]
+    }
+    implementation rootProject.ext.self["core"]
+
+}

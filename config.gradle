@@ -1,6 +1,6 @@
 def versionCode = 1
 def VERSION_LEVEL_1_2 = "1.0.0."//1-2级版本号
-def VERSION_TIME = "210610"
+def VERSION_TIME = "210526"
 def versionName = VERSION_LEVEL_1_2 + VERSION_TIME
 
 
@@ -23,7 +23,8 @@ ext {
     ]
 
     self = [
-            "core"      : "com.github.liuhao722:YZCore:0.0.4-SNAPSHOT",
+            "core"  : "com.github.liuhao722:YZCore:0.0.5-SNAPSHOT",
+            "appSdk": "com.github.liuhao722:BlueToothWorth:0.0.3-SNAPSHOT",
     ]
 
     httpDependencies = [
@@ -83,7 +84,6 @@ ext {
             "numberprogressbar"            : "com.daimajia.numberprogressbar:library:1.4@aar",
             "livebus"                      : "com.jeremyliao:live-event-bus-x:1.5.7",//消息总线，基于LiveData
             "gmsAppindexing"               : "com.google.android.gms:play-services-appindexing:8.1.0",
-            "logger"                       : "com.orhanobut:logger:2.2.0",//日志框架
             "fastjson"                     : "com.alibaba:fastjson:1.1.70.android",//数据解析
             "AndroidAudioConverter"        : "com.github.adrielcafe:AndroidAudioConverter:0.0.8",
             "jsoup"                        : "org.jsoup:jsoup:1.11.3",//网页解析工具
@@ -97,7 +97,7 @@ ext {
 
             "ARouter-api"                  : "com.alibaba:arouter-api:1.5.0",//阿里路由框架
             "ARouter-compiler"             : "com.alibaba:arouter-compiler:1.2.2",
-            "tagCloudView"             : "com.github.kingideayou:tagcloudview:1.0.2",
+            "tagCloudView"                 : "com.github.kingideayou:tagcloudview:1.0.2",
 
     ]
 
