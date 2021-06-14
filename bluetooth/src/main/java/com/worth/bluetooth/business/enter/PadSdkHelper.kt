@@ -3,10 +3,14 @@ package com.worth.bluetooth.business.enter
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import com.worth.bluetooth.business.ext.setMacId
+import com.worth.bluetooth.business.utils.BluetoothUtils
+import com.worth.bluetooth.other.BtHelperClient
+import com.worth.bluetooth.other.MessageItem
+import com.worth.bluetooth.other.OnSearchDeviceListener
+import com.worth.bluetooth.other.OnSendMessageListener
 import com.worth.framework.base.core.storage.MeKV
 import com.worth.framework.base.core.utils.L
 import com.worth.framework.base.core.utils.application
-import top.wuhaojie.bthelper.*
 
 
 /**
@@ -17,15 +21,12 @@ import top.wuhaojie.bthelper.*
  */
 class PadSdkHelper private constructor() {
     private val TAG = "PadSdkHelper"
-    var btHelperClient: BtHelperClient? = null
-
     /**
      * 初始化sdk
      */
     @JvmOverloads
     fun initPadSdk(): PadSdkHelper {
-        var btHelperClient = BtHelperClient.from(application)
-
+        BluetoothUtils.instance.initSdk()
         return this
     }
 
@@ -49,44 +50,22 @@ class PadSdkHelper private constructor() {
      * 连接设备
      */
     fun connection() {
+        BluetoothUtils.instance.connection()
     }
 
     /**
      * 断开设备
      */
     fun disconnection() {
-
+        BluetoothUtils.instance.disconnection()
     }
 
     /**
      * 搜索设备
+     * 可以获取到蓝牙的名称和物理地址，在未连接之前，拿不到uuid。
      */
     fun searchDevices() {
-        btHelperClient?.searchDevices(object : OnSearchDeviceListener {
-            override fun onStartDiscovery() {
-                // 在进行搜索前回调
-                L.d(TAG, "onStartDiscovery()")
-            }
-
-            @SuppressLint("MissingPermission")
-            override fun onNewDeviceFound(device: BluetoothDevice) {
-                // 当寻找到一个新设备时回调
-                L.d(TAG, "device: ${device.name} ${device.address}")
-            }
-
-            override fun onSearchCompleted(
-                bondedList: List<BluetoothDevice>,
-                newList: List<BluetoothDevice>
-            ) {
-                // 当搜索蓝牙设备完成后回调
-                L.d(TAG, "SearchCompleted: bondedList$bondedList")
-                L.d(TAG, "SearchCompleted: newList$newList")
-            }
-
-            override fun onError(e: java.lang.Exception) {
-                e.printStackTrace()
-            }
-        })
+        BluetoothUtils.instance.searchDevices()
     }
 
     /**
@@ -94,39 +73,21 @@ class PadSdkHelper private constructor() {
      * @param msg 要发送的内容
      */
     fun sendMsg(macId: String, msg: String) {
-        val item = MessageItem(msg)
-
-        btHelperClient?.sendMessage(macId, item, true, object : OnSendMessageListener {
-            override fun onSuccess(status: Int, response: String) {
-                // 当发送成功，同时获得响应体时回调
-
-                // 状态码:   描述响应是否正确.
-                //           1代表响应回复内容正确, -1代表响应内容不正确, 即数据损坏
-                // 响应信息: 来自远程蓝牙设备的响应内容, 可以通过response.getBytes()获取字节数组
-            }
-
-            override fun onConnectionLost(e: Exception) {
-                e.printStackTrace()
-            }
-
-            override fun onError(e: Exception) {
-                e.printStackTrace()
-            }
-        })
+        BluetoothUtils.instance.sendMsg(macId, msg)
     }
 
     /**
      *  设置过滤器 使用过滤器来过滤掉那些硬件设备出现差错的数据
      */
     fun filter() {
-        btHelperClient!!.setFilter { response -> response.trim { it <= ' ' }.length >= 5 }
+        BluetoothUtils.instance.filter()
     }
 
     /**
      * 释放资源
      */
     fun release() {
-        btHelperClient?.close()
+        BluetoothUtils.instance.release()
     }
 
     /**
