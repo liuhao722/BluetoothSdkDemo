@@ -49,7 +49,6 @@ class PadSdkHelper private constructor() {
      * 连接设备
      */
     fun connection() {
-
     }
 
     /**

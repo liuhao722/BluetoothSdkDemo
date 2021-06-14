@@ -92,6 +92,5 @@ dependencies {
     annotationProcessor rootProject.ext.dependencies["ARouter-compiler"]
 
     implementation rootProject.ext.self["core"]
-    implementation rootProject.ext.self["BluetoothHelper"]
 
 }

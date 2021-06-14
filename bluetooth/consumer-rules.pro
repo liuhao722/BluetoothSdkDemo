@@ -113,6 +113,7 @@
 #--------------------------------自己定义部分了--------------------------------------------
 
 -keep class com.worth.bluetooth.**{*;}
+-keep class top.wuhaojie.bthelper.**{*;}
 -keep class com.tencent.mmkv.**{*;}
 -keep class okhttp3.**{*;}
 

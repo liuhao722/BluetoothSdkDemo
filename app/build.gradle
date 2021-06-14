@@ -99,6 +99,5 @@ dependencies {
 //        implementation rootProject.ext.self["appSdk"]
     }
     implementation rootProject.ext.self["core"]
-    implementation rootProject.ext.self["BluetoothHelper"]
 
 }
