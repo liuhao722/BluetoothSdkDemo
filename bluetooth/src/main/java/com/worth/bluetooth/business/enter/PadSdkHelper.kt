@@ -1,22 +1,13 @@
 package com.worth.bluetooth.business.enter
 
-import android.annotation.SuppressLint
 import android.app.Activity
-import android.bluetooth.*
+import android.bluetooth.BluetoothDevice
 import android.content.Context
-import android.content.Intent
-import android.os.Build
-import androidx.annotation.RequiresApi
 import com.worth.bluetooth.business.ext.setMacId
 import com.worth.bluetooth.business.ext.setPhoneType
 import com.worth.bluetooth.business.utils.BluetoothUtil
 import com.worth.bluetooth.business.utils.BluetoothUtils
-import com.worth.bluetooth.other.BtHelperClient
-import com.worth.bluetooth.other.MessageItem
-import com.worth.bluetooth.other.OnSearchDeviceListener
-import com.worth.bluetooth.other.OnSendMessageListener
 import com.worth.framework.base.core.storage.MeKV
-import com.worth.framework.base.core.utils.L
 import com.worth.framework.base.core.utils.application
 
 
