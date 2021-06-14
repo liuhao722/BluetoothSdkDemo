@@ -2,6 +2,7 @@ package com.worth.bluetooth.business.enter
 
 import android.app.Activity
 import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothGatt
 import android.content.Context
 import com.worth.bluetooth.business.callbacks.SearchCallback
 import com.worth.bluetooth.business.ext.setMacId
@@ -9,6 +10,7 @@ import com.worth.bluetooth.business.ext.setPhoneType
 import com.worth.bluetooth.business.utils.BluetoothUtil
 import com.worth.bluetooth.business.utils.PadSdkExt
 import com.worth.framework.base.core.storage.MeKV
+import com.worth.framework.base.core.utils.L
 import com.worth.framework.base.core.utils.application
 
 
@@ -152,6 +154,13 @@ class PadSdkHelper private constructor() {
      */
     fun stopDiscovery() {
         BluetoothUtil.instance.stopDiscovery()
+    }
+
+    /**
+     * 清理蓝牙缓存
+     */
+    fun refreshDeviceCache(): Boolean {
+        return BluetoothUtil.instance.refreshDeviceCache()
     }
 
     /**

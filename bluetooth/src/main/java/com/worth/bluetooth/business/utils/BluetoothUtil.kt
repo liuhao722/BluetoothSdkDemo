@@ -10,6 +10,7 @@ import android.os.Build
 import android.provider.Settings
 import androidx.annotation.RequiresApi
 import com.worth.framework.base.core.utils.L
+import java.lang.reflect.Method
 
 
 /**
@@ -222,6 +223,28 @@ internal class BluetoothUtil private constructor() {
                 null
             }
         }
+    }
+
+    /**
+     * 清理蓝牙缓存
+     */
+    internal fun refreshDeviceCache(): Boolean {
+        if (connectGatt != null) {
+            val tempVal: BluetoothGatt = connectGatt as BluetoothGatt
+            try {
+                val localMethod = tempVal.javaClass.getMethod(
+                    "refresh", *arrayOfNulls(0)
+                )
+                if (localMethod != null) {
+                    return (localMethod.invoke(
+                        tempVal, *arrayOfNulls(0)
+                    ) as Boolean)
+                }
+            } catch (localException: Exception) {
+                L.i("refreshDeviceCache", "An exception occured while refreshing device")
+            }
+        }
+        return false
     }
 
     init {
