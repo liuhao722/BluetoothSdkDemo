@@ -16,7 +16,7 @@ internal class PadSdkGlobalHandler private constructor() {
         override fun handleMessage(msg: Message) {
             super.handleMessage(msg)
             when (msg.what) {
-                
+
             }
         }
     }
