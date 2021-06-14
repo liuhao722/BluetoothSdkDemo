@@ -1,8 +1,11 @@
 package com.worth.bluetooth.business.enter
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.bluetooth.BluetoothDevice
 import com.worth.bluetooth.business.ext.setMacId
+import com.worth.bluetooth.business.ext.setPhoneType
+import com.worth.bluetooth.business.utils.BluetoothUtil
 import com.worth.bluetooth.business.utils.BluetoothUtils
 import com.worth.bluetooth.other.BtHelperClient
 import com.worth.bluetooth.other.MessageItem
@@ -21,6 +24,7 @@ import com.worth.framework.base.core.utils.application
  */
 class PadSdkHelper private constructor() {
     private val TAG = "PadSdkHelper"
+
     /**
      * 初始化sdk
      */
@@ -34,7 +38,7 @@ class PadSdkHelper private constructor() {
      * 设置使用设备的类型
      */
     fun setPhoneType(isPad: Boolean = true): PadSdkHelper {
-
+        isPad?.let { MeKV.setPhoneType(it) }
         return this
     }
 
@@ -82,6 +86,39 @@ class PadSdkHelper private constructor() {
     fun filter() {
         BluetoothUtils.instance.filter()
     }
+
+    /**
+     * 直接打开蓝牙
+     */
+    fun onBlueTooth() {
+        BluetoothUtil.instance.onBlueTooth()
+    }
+
+    /**
+     * 关闭蓝牙
+     */
+    fun offBlueTooth() {
+        BluetoothUtil.instance.offBlueTooth()
+    }
+
+    /**
+     * 去设置页面打开蓝牙操作
+     */
+    fun toSettingBluetooth(activity: Activity) {
+        BluetoothUtil.instance.toSettingBluetooth(activity)
+    }
+
+    /**
+     * 蓝牙是否可用
+     */
+    fun checkBlueToothEnable(): Boolean = BluetoothUtil.instance.checkBlueToothEnable()
+
+    /**
+     * 获取已经配对的设备
+     */
+    val connectedDevices: Set<BluetoothDevice>?
+        get() = BluetoothUtil.instance.connectedDevices
+
 
     /**
      * 释放资源

@@ -9,6 +9,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.worth.bluetooth.business.enter.PadSdkHelper;
+import com.worth.bluetooth.business.utils.BluetoothUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
