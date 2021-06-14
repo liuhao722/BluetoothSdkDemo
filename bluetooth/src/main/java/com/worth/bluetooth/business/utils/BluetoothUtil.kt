@@ -19,6 +19,7 @@ import com.worth.framework.base.core.utils.L
  * Description: This is BluetoothUtil
  */
 internal class BluetoothUtil private constructor() {
+    private var connectGatt: BluetoothGatt? = null
     private var bluetoothAdapter: BluetoothAdapter? = null
 
     //蓝牙是否可用
@@ -188,10 +189,10 @@ internal class BluetoothUtil private constructor() {
     /**
      * 连接设备
      */
-    internal fun connectGatt(context: Context, device: BluetoothDevice) {
+    internal fun connect(context: Context, device: BluetoothDevice) {
         stopDiscovery()
         if (bleEnable) {
-            device.connectGatt(context, true, object : BluetoothGattCallback() {
+            connectGatt = device.connectGatt(context, true, object : BluetoothGattCallback() {
                 override fun onConnectionStateChange(
                     gatt: BluetoothGatt,
                     status: Int,
@@ -206,6 +207,20 @@ internal class BluetoothUtil private constructor() {
                     super.onConnectionStateChange(gatt, status, newState)
                 }
             })
+        }
+    }
+
+    /**
+     * 断开连接设备
+     */
+    internal fun disconnect() {
+        stopDiscovery()
+        if (bleEnable) {
+            connectGatt?.run {
+                disconnect()
+                close()
+                null
+            }
         }
     }
 

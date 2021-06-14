@@ -3,10 +3,11 @@ package com.worth.bluetooth.business.enter
 import android.app.Activity
 import android.bluetooth.BluetoothDevice
 import android.content.Context
+import com.worth.bluetooth.business.callbacks.SearchCallback
 import com.worth.bluetooth.business.ext.setMacId
 import com.worth.bluetooth.business.ext.setPhoneType
 import com.worth.bluetooth.business.utils.BluetoothUtil
-import com.worth.bluetooth.business.utils.BluetoothUtils
+import com.worth.bluetooth.business.utils.PadSdkExt
 import com.worth.framework.base.core.storage.MeKV
 import com.worth.framework.base.core.utils.application
 
@@ -25,7 +26,7 @@ class PadSdkHelper private constructor() {
      */
     @JvmOverloads
     fun initPadSdk(): PadSdkHelper {
-        BluetoothUtils.instance.initSdk()
+        PadSdkExt.instance.initSdk()
         return this
     }
 
@@ -48,15 +49,15 @@ class PadSdkHelper private constructor() {
     /**
      * 连接设备
      */
-    fun connection() {
-        BluetoothUtils.instance.connection()
+    fun connect(context: Context, device: BluetoothDevice) {
+        application?.let { BluetoothUtil.instance.connect(it, device) }
     }
 
     /**
-     * 断开设备
+     * 断开连接设备
      */
-    fun disconnection() {
-        BluetoothUtils.instance.disconnection()
+    fun disconnect() {
+        BluetoothUtil.instance.disconnect()
     }
 
     /**
@@ -64,7 +65,22 @@ class PadSdkHelper private constructor() {
      * 可以获取到蓝牙的名称和物理地址，在未连接之前，拿不到uuid。
      */
     fun searchDevices() {
-        BluetoothUtils.instance.searchDevices()
+        PadSdkExt.instance.searchDevices(object : SearchCallback {
+            override fun onStartDiscovery() {
+            }
+
+            override fun onNewDeviceFound(device: BluetoothDevice) {
+            }
+
+            override fun onSearchCompleted(
+                bondedList: List<BluetoothDevice>,
+                newList: List<BluetoothDevice>
+            ) {
+            }
+
+            override fun onError(e: Exception) {
+            }
+        })
     }
 
     /**
@@ -72,14 +88,14 @@ class PadSdkHelper private constructor() {
      * @param msg 要发送的内容
      */
     fun sendMsg(macId: String, msg: String) {
-        BluetoothUtils.instance.sendMsg(macId, msg)
+        PadSdkExt.instance.sendMsg(macId, msg)
     }
 
     /**
      *  设置过滤器 使用过滤器来过滤掉那些硬件设备出现差错的数据
      */
     fun filter() {
-        BluetoothUtils.instance.filter()
+        PadSdkExt.instance.filter()
     }
 
     /**
@@ -139,17 +155,10 @@ class PadSdkHelper private constructor() {
     }
 
     /**
-     * 连接设备
-     */
-    fun connectGatt(context: Context, device: BluetoothDevice) {
-        application?.let { BluetoothUtil.instance.connectGatt(it, device) }
-    }
-
-    /**
      * 释放资源
      */
     fun release() {
-        BluetoothUtils.instance.release()
+        PadSdkExt.instance.release()
     }
 
     /**

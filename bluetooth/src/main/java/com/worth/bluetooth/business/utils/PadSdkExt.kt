@@ -8,7 +8,8 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import com.worth.bluetooth.business.utils.BluetoothUtils.BlueToothConnectReceiver.OnBleConnectListener
+import com.worth.bluetooth.business.callbacks.SearchCallback
+import com.worth.bluetooth.business.utils.PadSdkExt.BlueToothConnectReceiver.OnBleConnectListener
 import com.worth.bluetooth.other.BtHelperClient
 import com.worth.bluetooth.other.MessageItem
 import com.worth.bluetooth.other.OnSearchDeviceListener
@@ -23,7 +24,7 @@ import com.worth.framework.base.core.utils.application
  * TIME:    6/14/21 --> 4:45 PM
  * Description: This is BluetoothUtils
  */
-internal class BluetoothUtils private constructor() {
+internal class PadSdkExt private constructor() {
     private val TAG = "BluetoothUtils"
     private var blueToothConnectReceiver: BlueToothConnectReceiver? = null
     private var blueToothValueReceiver: BlueToothValueReceiver? = null
@@ -32,35 +33,27 @@ internal class BluetoothUtils private constructor() {
     fun initSdk() {
         if (btHelperClient != null) return
         btHelperClient = BtHelperClient.from(application)
-    }
-
-    /**
-     * 连接设备
-     */
-    internal fun connection() {
-
-    }
-
-    /**
-     * 断开设备
-     */
-    internal fun disconnection() {
-
+        application?.let {
+            registerBlueConnectionReceiver(it)
+            registerBluetoothStateReceiver(it)
+        }
     }
 
     /**
      * 搜索设备
      * 可以获取到蓝牙的名称和物理地址，在未连接之前，拿不到uuid。
      */
-    internal fun searchDevices() {
+    internal fun searchDevices(callback: SearchCallback) {
         btHelperClient?.searchDevices(object : OnSearchDeviceListener {
             override fun onStartDiscovery() {
+                callback?.onStartDiscovery()
                 // 在进行搜索前回调
                 L.d(TAG, "onStartDiscovery()")
             }
 
             @SuppressLint("MissingPermission")
             override fun onNewDeviceFound(device: BluetoothDevice) {
+                callback?.onNewDeviceFound(device)
                 // 当寻找到一个新设备时回调
                 L.d(TAG, "device: ${device.name} ${device.address}")
             }
@@ -69,12 +62,14 @@ internal class BluetoothUtils private constructor() {
                 bondedList: List<BluetoothDevice>,
                 newList: List<BluetoothDevice>
             ) {
+                callback?.onSearchCompleted(bondedList, newList)
                 // 当搜索蓝牙设备完成后回调
                 L.d(TAG, "SearchCompleted: bondedList$bondedList")
                 L.d(TAG, "SearchCompleted: newList$newList")
             }
 
             override fun onError(e: java.lang.Exception) {
+                callback?.onError(e)
                 e.printStackTrace()
             }
         })
@@ -86,7 +81,6 @@ internal class BluetoothUtils private constructor() {
      */
     internal fun sendMsg(macId: String, msg: String) {
         val item = MessageItem(msg)
-
         btHelperClient?.sendMessage(macId, item, true, object : OnSendMessageListener {
             override fun onSuccess(status: Int, response: String) {
                 // 当发送成功，同时获得响应体时回调
@@ -110,7 +104,7 @@ internal class BluetoothUtils private constructor() {
      *  设置过滤器 使用过滤器来过滤掉那些硬件设备出现差错的数据
      */
     internal fun filter() {
-        btHelperClient!!.setFilter { response -> response.trim { it <= ' ' }.length >= 5 }
+        btHelperClient?.setFilter { response -> response.trim { it <= ' ' }.length >= 5 }
     }
 
     /**
@@ -118,6 +112,10 @@ internal class BluetoothUtils private constructor() {
      */
     internal fun release() {
         btHelperClient?.close()
+        application?.let {
+            unregisterBlueConnectionReceiver(it)
+            unregisterBluetoothStateReceiver(it)
+        }
     }
 
     /**
@@ -128,7 +126,7 @@ internal class BluetoothUtils private constructor() {
     }
 
     private object SingletonHolder {
-        val holder = BluetoothUtils()
+        val holder = PadSdkExt()
     }
 
     /**********************************************************************************************/
@@ -143,7 +141,7 @@ internal class BluetoothUtils private constructor() {
                 // 找到设备后获取其设备
                 val device =
                     intent.getParcelableExtra<BluetoothDevice>(BluetoothDevice.EXTRA_DEVICE)
-                when (device!!.bondState) {
+                when (device?.bondState) {
                     BluetoothDevice.BOND_BONDING ->                     //正在配对
                         L.d("正在配对")
                     BluetoothDevice.BOND_BONDED ->                     //配对结束
