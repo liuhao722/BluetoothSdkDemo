@@ -112,20 +112,7 @@
 
 #--------------------------------自己定义部分了--------------------------------------------
 
-
--dontwarn com.baidu.tts.tools.cuid.util.CommonParam
--keep class com.baidu.tts.**{*;}
--keep class com.baidu.speechsynthesizer.**{*;}
--keep class com.baidu.aip.**{*;}
-
--keep class com.worth.bluetooth.base.core.bean.**{*;}
--keep class com.worth.bluetooth.base.network.bean.**{*;}
--keep class com.worth.bluetooth.base.core.utils.**{*;}
--keep class com.worth.bluetooth.base.network.**{*;}
--keep class com.worth.bluetooth.business.enter.**{*;}
--keep class com.worth.bluetooth.business.ext.ContactsKt{*;}
--keep class com.worth.bluetooth.business.ext.ToAppContactsCodes{*;}
--keep class com.worth.bluetooth.base.core.storage.**{*;}
+-keep class com.worth.bluetooth.**{*;}
 -keep class com.tencent.mmkv.**{*;}
 -keep class okhttp3.**{*;}
 
@@ -136,11 +123,6 @@
 # Retrofit does reflection on method and parameter annotations.
 -keepattributes RuntimeVisibleAnnotations, RuntimeVisibleParameterAnnotations
 
-# Retain service method parameters when optimizing.
--keepclassmembers,allowshrinking,allowobfuscation interface * {
-    @retrofit2.http.* <methods>;
-}
-
 # Ignore annotation used for build tooling.
 -dontwarn org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 
@@ -149,10 +131,6 @@
 
 # Guarded by a NoClassDefFoundError try/catch and only used when on the classpath.
 -dontwarn kotlin.Unit
-
-# Top-level functions that can only be used by Kotlin.
--dontwarn retrofit2.KotlinExtensions
--dontwarn retrofit2.KotlinExtensions$*
 
 # With R8 full mode, it sees no subtypes of Retrofit interfaces since they are created with a Proxy
 # and replaces all potential values with null. Explicitly keeping the interfaces prevents this.
@@ -169,9 +147,6 @@
     private static *** mmkvLogImp(...);
     private static *** onContentChangedByOuterProcess(***);
 }
--keep class com.baidu.speech.**{*;}
-
-
 
 -keep public class com.alibaba.android.arouter.routes.**{*;}
 -keep class * implements com.alibaba.android.arouter.facade.template.ISyringe{*;}

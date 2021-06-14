@@ -16,7 +16,7 @@ import java.lang.ref.WeakReference;
  * Description: This is GlobalHandler
  */
 public class PadSdkGlobalHandler {
-    private static final String TAG = "GlobalHandler";
+    private static final String TAG = "PadSdkGlobalHandler";
     private Handler handler = new Handler(Looper.getMainLooper()) {
         @Override
         public void handleMessage(@NonNull Message msg) {

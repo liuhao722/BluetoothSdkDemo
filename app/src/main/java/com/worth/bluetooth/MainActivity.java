@@ -31,14 +31,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initSdk() {
-        String host = "http://192.168.0.103:8080/api/v1/service/chat";
-        String uid = "testUid_1001";
-        Map header = new HashMap<>();
-        header.put("testHeader", "1234");
-        Map body = new HashMap<>();
-        body.put("testBody", "lili");
-
-        padSdkHelper = PadSdkHelper.Companion.getInstance().initPadSdk(host, header, body);
+        padSdkHelper = PadSdkHelper.Companion.getInstance().initPadSdk();
     }
 
 
@@ -57,13 +50,10 @@ public class MainActivity extends AppCompatActivity {
         String[] permissions = {
                 Manifest.permission.INTERNET,
                 Manifest.permission.ACCESS_NETWORK_STATE,
-                Manifest.permission.MODIFY_AUDIO_SETTINGS,
                 Manifest.permission.WRITE_SETTINGS,
                 Manifest.permission.ACCESS_WIFI_STATE,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE, // demo使用
-
-                Manifest.permission.RECORD_AUDIO,
-                Manifest.permission.SYSTEM_ALERT_WINDOW,
+                Manifest.permission.BLUETOOTH,
                 /* 下面是蓝牙用的，可以不申请
                 Manifest.permission.BROADCAST_STICKY,
                 Manifest.permission.BLUETOOTH,
