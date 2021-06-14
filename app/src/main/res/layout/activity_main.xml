@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#50f0"
+    android:orientation="vertical">
+
+    <Button
+        android:id="@+id/btn_search"
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:layout_marginLeft="24dp"
+        android:layout_marginTop="64dp"
+        android:layout_marginRight="24dp"
+        android:text="搜索蓝牙"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/tv_result_list"
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:layout_marginLeft="24dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginRight="24dp"
+        android:textSize="16sp"
+        tools:text="搜索到的蓝牙列表" />
+
+    <Button
+        android:id="@+id/btn_conn"
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:layout_marginLeft="24dp"
+        android:layout_marginTop="64dp"
+        android:layout_marginRight="24dp"
+        android:text="连接蓝牙"
+        android:textSize="16sp" />
+
+    <Button
+        android:id="@+id/btn_dis_conn"
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:layout_marginLeft="24dp"
+        android:layout_marginTop="64dp"
+        android:layout_marginRight="24dp"
+        android:text="断开蓝牙"
+        android:textSize="16sp" />
+</LinearLayout>

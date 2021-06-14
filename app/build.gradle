@@ -1,0 +1,89 @@
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+    id 'kotlin-android-extensions'
+    id 'kotlin-kapt'
+}
+
+android {
+    compileSdkVersion rootProject.ext.android["compileSdkVersion"]
+    buildToolsVersion rootProject.ext.android["buildToolsVersion"]
+
+
+    defaultConfig {
+        applicationId rootProject.ext.android["applicationId"]
+        minSdkVersion rootProject.ext.android["minSdkVersion"]
+        targetSdkVersion rootProject.ext.android["targetSdkVersion"]
+        versionCode rootProject.ext.android["versionCode"]
+        versionName rootProject.ext.android["versionName"]
+        flavorDimensions rootProject.ext.android["flavorDimensions"]
+
+        multiDexEnabled true
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        ndk {
+            // 设置支持的SO库架构
+            abiFilters 'armeabi-v7a'//, 'x86', 'armeabi-v7a', 'x86_64', 'arm64-v8a'
+        }
+
+        resConfigs "en", "zh"
+
+        kapt {
+            arguments {
+                arg("AROUTER_MODULE_NAME", project.getName())
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+
+    buildFeatures {
+        dataBinding = true
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: "libs", include: ["*.jar"])
+
+    api project(':bluetooth')
+//    api files('libs/framework-release-2.aar')
+
+    api rootProject.ext.dependencies["appcompat"]
+    api rootProject.ext.dependencies["appdesign"]
+
+    api rootProject.ext.dependencies["MMKV"]
+
+    api rootProject.ext.httpDependencies["retrofit"]
+    api rootProject.ext.httpDependencies["okhttp"]
+    api rootProject.ext.httpDependencies["converter-gson"]
+
+    api rootProject.ext.kotlinConfig["kotlin_stdlib"]
+    api rootProject.ext.kotlinConfig["core"]
+    api rootProject.ext.kotlinConfig["activityktx"]
+
+    api rootProject.ext.dependencies["ARouter-api"]
+    kapt rootProject.ext.dependencies["ARouter-compiler"]
+    annotationProcessor rootProject.ext.dependencies["ARouter-compiler"]
+
+    implementation autosize
+
+}
