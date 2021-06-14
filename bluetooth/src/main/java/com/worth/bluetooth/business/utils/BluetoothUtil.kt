@@ -15,11 +15,10 @@ import com.worth.framework.base.core.utils.L
 /**
  * Author:  LiuHao
  * Email:   114650501@qq.com
- * TIME:    5/25/21 --> 4:45 PM
- * Description: This is VipSdkHelper
+ * TIME:    6/14/21 --> 4:45 PM
+ * Description: This is BluetoothUtil
  */
 internal class BluetoothUtil private constructor() {
-    private val TAG = "BluetoothUtil"
     private var bluetoothAdapter: BluetoothAdapter? = null
 
     //蓝牙是否可用
@@ -93,7 +92,7 @@ internal class BluetoothUtil private constructor() {
     /**
      * 可发现模式
      * 默认情况下，设备的可发现模式会持续120秒。
-     * 通过给Intent对象添加EXTRA_DISCOVERABLE_DURATION附加字段，可以定义不同持续时间。
+     * 通过给Intent对象添加EXTRA_DISCOVERABLE_DURATION附加字段，可以定义不同持续时间。目前设置300秒
      * 应用程序能够设置的最大持续时间是3600秒
      */
     internal fun discoverableDuration(activity: Activity) {
@@ -108,10 +107,12 @@ internal class BluetoothUtil private constructor() {
      */
     internal fun startDiscovery() {
         if (bleEnable) {
-            if (!bluetoothAdapter!!.isDiscovering) {
-                bluetoothAdapter!!.startDiscovery()
+            bluetoothAdapter?.run {
+                if (!isDiscovering) {
+                    startDiscovery()
+                    L.d("扫描蓝牙设备")
+                }
             }
-            L.d("扫描蓝牙设备")
         }
     }
 
@@ -120,8 +121,11 @@ internal class BluetoothUtil private constructor() {
      */
     internal fun stopDiscovery() {
         if (bleEnable) {
-            if (bluetoothAdapter!!.isDiscovering) {
-                bluetoothAdapter!!.cancelDiscovery()
+            bluetoothAdapter?.run {
+                if (isDiscovering) {
+                    cancelDiscovery()
+                    L.d("停止扫描蓝牙设备")
+                }
             }
         }
     }
@@ -160,29 +164,30 @@ internal class BluetoothUtil private constructor() {
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     internal fun stopScan() {
         if (bleEnable) {
-            bluetoothAdapter!!.bluetoothLeScanner.stopScan(object : ScanCallback() {
-                override fun onScanResult(
-                    callbackType: Int,
-                    result: ScanResult
-                ) {
-                    super.onScanResult(callbackType, result)
-                }
+            bluetoothAdapter?.run {
+                bluetoothLeScanner.stopScan(object : ScanCallback() {
+                    override fun onScanResult(
+                        callbackType: Int,
+                        result: ScanResult
+                    ) {
+                        super.onScanResult(callbackType, result)
+                    }
 
-                override fun onBatchScanResults(results: List<ScanResult>) {
-                    super.onBatchScanResults(results)
-                }
+                    override fun onBatchScanResults(results: List<ScanResult>) {
+                        super.onBatchScanResults(results)
+                    }
 
-                override fun onScanFailed(errorCode: Int) {
-                    super.onScanFailed(errorCode)
-                }
-            })
+                    override fun onScanFailed(errorCode: Int) {
+                        super.onScanFailed(errorCode)
+                    }
+                })
+            }
         }
     }
 
     /**
      * 连接设备
      */
-    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     internal fun connectGatt(context: Context, device: BluetoothDevice) {
         stopDiscovery()
         if (bleEnable) {

@@ -2,7 +2,11 @@ package com.worth.bluetooth.business.enter
 
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.bluetooth.BluetoothDevice
+import android.bluetooth.*
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import androidx.annotation.RequiresApi
 import com.worth.bluetooth.business.ext.setMacId
 import com.worth.bluetooth.business.ext.setPhoneType
 import com.worth.bluetooth.business.utils.BluetoothUtil
@@ -119,6 +123,36 @@ class PadSdkHelper private constructor() {
     val connectedDevices: Set<BluetoothDevice>?
         get() = BluetoothUtil.instance.connectedDevices
 
+    /**
+     * 可发现模式
+     * 默认情况下，设备的可发现模式会持续120秒。
+     * 通过给Intent对象添加EXTRA_DISCOVERABLE_DURATION附加字段，可以定义不同持续时间。目前设置300秒
+     * 应用程序能够设置的最大持续时间是3600秒
+     */
+    fun discoverableDuration(activity: Activity) {
+        BluetoothUtil.instance.discoverableDuration(activity)
+    }
+
+    /**
+     * 扫描蓝牙，会走广播
+     */
+    fun startDiscovery() {
+        BluetoothUtil.instance.startDiscovery()
+    }
+
+    /**
+     * 停止扫描
+     */
+    fun stopDiscovery() {
+        BluetoothUtil.instance.stopDiscovery()
+    }
+
+    /**
+     * 连接设备
+     */
+    fun connectGatt(context: Context, device: BluetoothDevice) {
+        application?.let { BluetoothUtil.instance.connectGatt(it, device) }
+    }
 
     /**
      * 释放资源
