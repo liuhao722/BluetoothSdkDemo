@@ -1,8 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest package="com.worth.bluetooth"
-    xmlns:android="http://schemas.android.com/apk/res/android">
-    <uses-permission android:name="android.permission.BLUETOOTH"/>
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.worth.bluetooth">
+
+    <!--    蓝牙所需权限，可能扫描时候还需要一个位置-->
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+
+    <!--    智能设备所需权限 sdk需要的-->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+
+
+    <!--    基站app需要的-->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
     <application>
+
     </application>
 </manifest>

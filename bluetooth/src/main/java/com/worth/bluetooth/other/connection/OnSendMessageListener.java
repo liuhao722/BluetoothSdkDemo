@@ -1,4 +1,4 @@
-package com.worth.bluetooth.other;
+package com.worth.bluetooth.other.connection;
 
 public interface OnSendMessageListener extends IErrorListener, IConnectionLostListener {
     /**

@@ -1,4 +1,4 @@
-package com.worth.bluetooth.other;
+package com.worth.bluetooth.other.connection;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;

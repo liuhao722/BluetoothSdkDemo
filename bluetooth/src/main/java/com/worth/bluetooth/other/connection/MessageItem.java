@@ -1,4 +1,4 @@
-package com.worth.bluetooth.other;
+package com.worth.bluetooth.other.connection;
 
 public class MessageItem {
     enum TYPE {
