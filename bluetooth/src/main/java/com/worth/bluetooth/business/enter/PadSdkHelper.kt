@@ -76,8 +76,8 @@ class PadSdkHelper private constructor() {
 
             override fun onSearchCompleted(
                 bondedList: List<BluetoothDevice>,
-                newList: List<BluetoothDevice>
-            ) {
+                newList: List<BluetoothDevice>) {
+
             }
 
             override fun onError(e: Exception) {
