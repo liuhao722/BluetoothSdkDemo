@@ -113,6 +113,7 @@
 #--------------------------------自己定义部分了--------------------------------------------
 
 -keep class com.worth.bluetooth.**{*;}
+-keep class com.clj.fastble.**{*;}
 -keep class com.espressif.iot.esptouch.**{*;}
 -keep class top.wuhaojie.bthelper.**{*;}
 -keep class com.tencent.mmkv.**{*;}

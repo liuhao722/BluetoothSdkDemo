@@ -144,9 +144,9 @@ internal class PadSdkExt private constructor() {
                 when (device?.bondState) {
                     BluetoothDevice.BOND_BONDING ->                     //正在配对
                         L.d("正在配对")
-                    BluetoothDevice.BOND_BONDED ->                     //配对结束
+                    BluetoothDevice.BOND_BONDED ->                      //配对结束
                         L.d("配对结束")
-                    BluetoothDevice.BOND_NONE ->                     //取消配对/未配对
+                    BluetoothDevice.BOND_NONE ->                        //取消配对/未配对
                         L.d("取消配对/未配对")
                     else -> {
                         L.d("配对其他情况")
@@ -159,7 +159,7 @@ internal class PadSdkExt private constructor() {
     /**********************************************************************************************/
 
 
-    internal fun registerBlueConnectionReceiver(application: Application) {
+    private fun registerBlueConnectionReceiver(application: Application) {
 
         //蓝牙连接广播
         blueToothConnectReceiver = BlueToothConnectReceiver()
@@ -180,7 +180,7 @@ internal class PadSdkExt private constructor() {
     }
 
 
-    internal fun unregisterBlueConnectionReceiver(application: Application) {
+    private fun unregisterBlueConnectionReceiver(application: Application) {
         blueToothConnectReceiver?.let {
             application.unregisterReceiver(it)
         }
@@ -191,13 +191,9 @@ internal class PadSdkExt private constructor() {
      */
     internal class BlueToothConnectReceiver : BroadcastReceiver() {
         private var onBleConnectListener: OnBleConnectListener? = null
-        override fun onReceive(
-            context: Context,
-            intent: Intent
-        ) {
+        override fun onReceive(context: Context, intent: Intent) {
             val action = intent.action
-            val device =
-                intent.getParcelableExtra<BluetoothDevice>(BluetoothDevice.EXTRA_DEVICE)
+            val device = intent.getParcelableExtra<BluetoothDevice>(BluetoothDevice.EXTRA_DEVICE)
             when (action) {
                 BluetoothDevice.ACTION_ACL_CONNECTED -> {
                     if (onBleConnectListener != null) {
@@ -227,8 +223,7 @@ internal class PadSdkExt private constructor() {
 
     /**********************************************************************************************/
 
-    internal fun registerBluetoothStateReceiver(application: Application) {
-        //注册广播，蓝牙状态监听
+    private fun registerBluetoothStateReceiver(application: Application) {
         //注册广播，蓝牙状态监听
         if (blueToothValueReceiver == null) {
             blueToothValueReceiver = BlueToothValueReceiver()
@@ -237,7 +232,7 @@ internal class PadSdkExt private constructor() {
         }
     }
 
-    internal fun unregisterBluetoothStateReceiver(application: Application) {
+    private fun unregisterBluetoothStateReceiver(application: Application) {
         blueToothValueReceiver?.let {
             application.unregisterReceiver(it)
         }
@@ -250,11 +245,7 @@ internal class PadSdkExt private constructor() {
         override fun onReceive(context: Context, intent: Intent) {
             val action = intent.action
             if (BluetoothAdapter.ACTION_STATE_CHANGED == action) {
-                val state = intent.getIntExtra(
-                    BluetoothAdapter.EXTRA_STATE,
-                    DEFAULT_VALUE_BLUETOOTH
-                )
-                when (state) {
+                when (intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, DEFAULT_VALUE_BLUETOOTH)) {
                     BluetoothAdapter.STATE_OFF -> L.d("蓝牙已关闭")
                     BluetoothAdapter.STATE_ON -> L.d("蓝牙已打开")
                     BluetoothAdapter.STATE_TURNING_ON -> L.d("正在打开蓝牙")

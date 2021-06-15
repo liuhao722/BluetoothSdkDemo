@@ -1,12 +1,12 @@
-package com.worth.bluetooth.other.connection.server;
+package com.worth.bluetooth.other.server;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.content.Context;
 
-import com.worth.bluetooth.other.connection.Constants;
-import com.worth.bluetooth.other.connection.OnReceiveMessageListener;
+import com.worth.bluetooth.other.Constants;
+import com.worth.bluetooth.other.OnReceiveMessageListener;
 
 import java.io.IOException;
 import java.util.UUID;

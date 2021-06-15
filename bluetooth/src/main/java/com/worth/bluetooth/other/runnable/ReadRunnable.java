@@ -1,8 +1,8 @@
-package com.worth.bluetooth.other.connection.runnable;
+package com.worth.bluetooth.other.runnable;
 
 import android.bluetooth.BluetoothSocket;
 
-import com.worth.bluetooth.other.connection.OnReceiveMessageListener;
+import com.worth.bluetooth.other.OnReceiveMessageListener;
 
 import java.io.BufferedReader;
 import java.io.IOException;
