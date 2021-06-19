@@ -19,11 +19,11 @@
     <TextView
         android:id="@+id/tv_result_list"
         android:layout_width="match_parent"
-        android:layout_height="64dp"
+        android:layout_height="364dp"
         android:layout_marginLeft="24dp"
         android:layout_marginTop="4dp"
         android:layout_marginRight="24dp"
-        android:textSize="16sp"
+        android:textSize="10sp"
         tools:text="搜索到的蓝牙列表" />
 
     <Button
@@ -31,7 +31,7 @@
         android:layout_width="match_parent"
         android:layout_height="64dp"
         android:layout_marginLeft="24dp"
-        android:layout_marginTop="64dp"
+        android:layout_marginTop="24dp"
         android:layout_marginRight="24dp"
         android:text="连接蓝牙"
         android:textSize="16sp" />
@@ -41,8 +41,17 @@
         android:layout_width="match_parent"
         android:layout_height="64dp"
         android:layout_marginLeft="24dp"
-        android:layout_marginTop="64dp"
+        android:layout_marginTop="24dp"
         android:layout_marginRight="24dp"
         android:text="断开蓝牙"
+        android:textSize="16sp" />
+    <Button
+        android:id="@+id/btn_all_devices"
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:layout_marginLeft="24dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginRight="24dp"
+        android:text="获取所有蓝牙设备"
         android:textSize="16sp" />
 </LinearLayout>

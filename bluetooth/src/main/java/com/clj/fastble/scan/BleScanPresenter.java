@@ -110,7 +110,7 @@ public abstract class BleScanPresenter implements BluetoothAdapter.LeScanCallbac
     }
 
     private void checkDevice(BleDevice bleDevice) {
-        if (TextUtils.isEmpty(mDeviceMac) && (mDeviceNames == null || mDeviceNames.length < 1)) {
+        if (TextUtils.isEmpty(mDeviceMac) && (mDeviceNames == null || mDeviceNames.length < 1 || mDeviceNames[0] == null)) {
             correctDeviceAndNextStep(bleDevice);
             return;
         }

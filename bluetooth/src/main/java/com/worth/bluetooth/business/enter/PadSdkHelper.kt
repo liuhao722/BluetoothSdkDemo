@@ -6,22 +6,16 @@ import android.bluetooth.BluetoothGatt
 import android.content.Intent
 import android.provider.Settings
 import com.clj.fastble.BleManager
-import com.clj.fastble.callback.BleGattCallback
-import com.clj.fastble.callback.BleScanAndConnectCallback
-import com.clj.fastble.callback.BleScanCallback
+import com.clj.fastble.callback.*
 import com.clj.fastble.data.BleDevice
 import com.clj.fastble.exception.BleException
 import com.clj.fastble.scan.BleScanRuleConfig
-import com.worth.bluetooth.business.ext.getMacId
 import com.worth.bluetooth.business.ext.setMacId
 import com.worth.bluetooth.business.ext.setPhoneType
-import com.worth.bluetooth.business.gloable.SERVICE_UUID
 import com.worth.bluetooth.business.utils.BluetoothUtil
-import com.worth.bluetooth.business.utils.PadSdkExt
 import com.worth.framework.base.core.storage.MeKV
 import com.worth.framework.base.core.utils.L
 import com.worth.framework.base.core.utils.application
-import java.util.*
 
 
 /**
@@ -44,29 +38,33 @@ class PadSdkHelper private constructor() {
         BleManager.getInstance()
             .enableLog(true)
             .setReConnectCount(1, 5000)
-            .setSplitWriteNum(20)
-            .setConnectOverTime(10000)
+            .setConnectOverTime(20000)
             .operateTimeout = 5000
-
         return this
     }
 
     /**
      * 配置扫描规则
      */
-    internal fun initScanRule() {
-        val serviceUUIDS = arrayOf<UUID>(UUID.fromString(SERVICE_UUID))
-        val names = "iMEMBER"
+    private fun initScanRule(vararg bluetoothName: String) {
         val scanRuleConfig = BleScanRuleConfig.Builder()
-            .setServiceUuids(serviceUUIDS)
-            .setDeviceName(true, names)     //  模糊匹配--看是否是过滤掉names 还是说只显示names
-            .setDeviceMac(MeKV.getMacId())
-            .setAutoConnect(isAutoConnect)
-            .setScanTimeOut(10000)
+            .setServiceUuids(null) // 只扫描指定的服务的设备，可选
+            .setDeviceName(true, *bluetoothName) // 只扫描指定广播名的设备，可选
+            .setDeviceMac(null) // 只扫描指定mac的设备，可选
+            .setAutoConnect(isAutoConnect) // 连接时的autoConnect参数，可选，默认false
+            .setScanTimeOut(10000) // 扫描超时时间，可选，默认10秒
             .build()
         BleManager.getInstance().initScanRule(scanRuleConfig)
     }
 
+    /**
+     * 搜索设备
+     * 可以获取到蓝牙的名称和物理地址，在未连接之前，拿不到uuid。
+     */
+    fun searchDevices(callback: BleScanCallback, vararg bluetoothName: String) {
+        initScanRule(*bluetoothName)
+        BleManager.getInstance().scan(callback)
+    }
 
     /**
      * 设置使用设备的类型
@@ -135,7 +133,7 @@ class PadSdkHelper private constructor() {
         })
     }
 
-    fun scanAndConnect(callback: BleScanAndConnectCallback){
+    fun scanAndConnect() {
         BleManager.getInstance().scanAndConnect(object : BleScanAndConnectCallback() {
             override fun onScanStarted(success: Boolean) {
 
@@ -176,15 +174,17 @@ class PadSdkHelper private constructor() {
      * 取消扫描
      * 如果调用该方法，如果还在扫描状态，则立即结束，并回调该onScanFinished方法。
      */
-    fun cancelScan(){
+    fun cancelScan() {
         BleManager.getInstance().cancelScan();
     }
+
     /**
      * 断开连接设备
      */
     fun disconnect(bleDevice: BleDevice?) {
         BleManager.getInstance().disconnect(bleDevice)
     }
+
     /**
      * 断开所有已连接设备
      */
@@ -193,59 +193,59 @@ class PadSdkHelper private constructor() {
     }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     /**
-     * 搜索设备
-     * 可以获取到蓝牙的名称和物理地址，在未连接之前，拿不到uuid。
+     *  在不扩大MTU和扩大MTU的无效性的情况下，发送超过20字节的长数据时需要分包。该参数boolean split表示是否使用报文传递；
+     *  write不带boolean split参数的方法默认将数据分包20多个字节。
+     *  在onWriteSuccess回调方法上：current表示当前发送的包数，total表示本次的总包数据，justWrite表示刚刚发送成功的包。
+     * @param bleDevice
+     * @param uuid_service
+     * @param uuid_write
+     * @param data
      */
-    fun searchDevices() {
-        BleManager.getInstance().scan(object : BleScanCallback() {
-            override fun onScanStarted(success: Boolean) {
+    fun write(
+        bleDevice: BleDevice?, uuid_service: String?, uuid_write: String?, data: ByteArray?
+    ) {
+        BleManager.getInstance().write(
+            bleDevice!!,
+            uuid_service!!,
+            uuid_write!!,
+            data,
+            true,
+            object : BleWriteCallback() {
+                override fun onWriteSuccess(current: Int, total: Int, justWrite: ByteArray?) {
 
-            }
+                }
 
-            override fun onScanning(bleDevice: BleDevice) {
+                override fun onWriteFailure(exception: BleException?) {
 
-            }
-
-            override fun onScanFinished(scanResultList: List<BleDevice>) {
-
-            }
-        })
+                }
+            })
     }
 
     /**
-     * @param macId mac地址 "20:15:03:18:08:63"
-     * @param msg 要发送的内容
+     * read 传输中间的内容
+     *
+     * @param bleDevice
+     * @param uuid_service
+     * @param uuid_read
      */
-    fun sendMsg(macId: String, msg: String) {
+    fun read(
+        bleDevice: BleDevice?,
+        uuid_service: String?,
+        uuid_read: String?,
+    ) {
+        BleManager.getInstance()
+            .read(bleDevice, uuid_service, uuid_read, object : BleReadCallback() {
+                override fun onReadSuccess(data: ByteArray?) {
+                }
 
+                override fun onReadFailure(exception: BleException?) {
+                }
+            })
     }
 
     /**
-     *  设置过滤器 使用过滤器来过滤掉那些硬件设备出现差错的数据
-     */
-    fun filter() {
-
-    }
-
-    /**
-     * 直接打开蓝牙
+     * 打开蓝牙
      */
     fun onBlueTooth() {
         if (BleManager.getInstance().isSupportBle) {
@@ -298,6 +298,26 @@ class PadSdkHelper private constructor() {
      */
     fun refreshDeviceCache(): Boolean {
         return BluetoothUtil.instance.refreshDeviceCache()
+    }
+
+    @JvmOverloads
+    fun notify(
+        bleDevice: BleDevice,
+        uuid_service: String,
+        uuid_notify: String,
+        callback: BleNotifyCallback
+    ) {
+        BleManager.getInstance().notify(
+            bleDevice, uuid_service, uuid_notify, true, callback
+        )
+    }
+
+    fun stopNotify(
+        bleDevice: BleDevice,
+        uuid_service: String,
+        uuid_notify: String
+    ) {
+        BleManager.getInstance().stopNotify(bleDevice, uuid_service, uuid_notify, true)
     }
 
     /**

@@ -1,4 +1,4 @@
-package com.worth.bluetooth;
+package com.worth.bluetoothdemo;
 
 import android.app.Application;
 

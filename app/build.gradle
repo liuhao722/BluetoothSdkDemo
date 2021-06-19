@@ -55,37 +55,6 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
-
-    buildFeatures {
-        dataBinding = true
-    }
-}
-
-dependencies {
-    implementation fileTree(dir: "libs", include: ["*.jar"])
-
-    api project(':bluetooth')
-//    api files('libs/framework-release-2.aar')
-
-    api rootProject.ext.dependencies["appcompat"]
-    api rootProject.ext.dependencies["appdesign"]
-
-    api rootProject.ext.dependencies["MMKV"]
-
-    api rootProject.ext.httpDependencies["retrofit"]
-    api rootProject.ext.httpDependencies["okhttp"]
-    api rootProject.ext.httpDependencies["converter-gson"]
-
-    api rootProject.ext.kotlinConfig["kotlin_stdlib"]
-    api rootProject.ext.kotlinConfig["core"]
-    api rootProject.ext.kotlinConfig["activityktx"]
-
-    api rootProject.ext.dependencies["ARouter-api"]
-    kapt rootProject.ext.dependencies["ARouter-compiler"]
-    annotationProcessor rootProject.ext.dependencies["ARouter-compiler"]
-
-    implementation autosize
-
 }
 
 def isDebug = true
