@@ -24,9 +24,8 @@ fun MeKV.setMacId(macId: String) {
 /**
  * 获取当前的macId
  */
-fun MeKV.getMacId() {
-    MeKVUtil.get(PAD_SDK_KEY_APP_MAC_ID, "20:15:03:18:08:63")
-}
+fun MeKV.getMacId() = MeKVUtil.get(PAD_SDK_KEY_APP_MAC_ID, "20:15:03:18:08:63")
+
 
 /**
  * 设置当前的phoneType
@@ -39,6 +38,4 @@ fun MeKV.setPhoneType(phoneTypeIsPad: Boolean) {
  * 获取当前的phoneType
  * @return phoneTypeIsPad true是pad false为手机
  */
-fun MeKV.getPhoneType() {
-    MeKVUtil.get(PAD_SDK_KEY_PHONE_TYPE, true)
-}
+fun MeKV.getPhoneType() = MeKVUtil.get(PAD_SDK_KEY_PHONE_TYPE, true)

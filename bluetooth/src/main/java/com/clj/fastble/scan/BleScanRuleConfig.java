@@ -44,7 +44,7 @@ public class BleScanRuleConfig {
         private String[] mDeviceNames = null;
         private String mDeviceMac = null;
         private boolean mAutoConnect = false;
-        private boolean mFuzzy = false;
+        private boolean mFuzzy = true;//模糊匹配
         private long mTimeOut = BleManager.DEFAULT_SCAN_TIME;
 
         public Builder setServiceUuids(UUID[] uuids) {
