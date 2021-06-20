@@ -220,7 +220,7 @@ class PadSdkHelper private constructor() {
                 }
             })
         } else {
-            Log.e(TAG,"other")
+            Log.e(TAG,"当前设备已连接-不进行逻辑处理")
         }
     }
 
