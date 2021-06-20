@@ -52,6 +52,7 @@ const val TO_PAIRED_START_KEY1 = "0000ffe1"                                     
 val checkData: ByteArray = HexUtil.hexStringToBytes("02100104")                           //  配对请求的发送数据
 val resultOk: ByteArray = HexUtil.hexStringToBytes("022001aa")                            //  配对验证成功
 val resultFail: ByteArray = HexUtil.hexStringToBytes("02010101")                          //  配对验证失败
+val toDeviceClickResult: ByteArray = HexUtil.hexStringToBytes("02010102")                 //  单击事件收到成功，返回应该是0102 不应该和错误的01混为一谈
 // 闪烁规则-前面两位01f4闪烁的耗时 比如500毫秒。
 // 比如需要闪烁三次500毫秒的话 就是500*3=1500 然后必须再乘以2 才是正确的闪烁频率，否则只闪烁一半，0bb8总的耗时（最终为3000）
 val successToDeviceFlash: ByteArray = HexUtil.hexStringToBytes("02300401f40bb8")          //  配对成功，闪烁3次 500毫秒一次

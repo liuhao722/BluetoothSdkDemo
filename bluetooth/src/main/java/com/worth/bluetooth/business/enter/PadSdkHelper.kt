@@ -18,6 +18,7 @@ import com.worth.bluetooth.business.ext.setMacId
 import com.worth.bluetooth.business.ext.setPhoneType
 import com.worth.bluetooth.business.gloable.*
 import com.worth.bluetooth.business.utils.BluetoothUtil
+import com.worth.bluetooth.business.utils.FastSendIntercept
 import com.worth.bluetooth.business.utils.PadSdkGlobalHandler
 import com.worth.bluetooth.business.utils.ParseHelper
 import com.worth.framework.base.core.storage.MeKV
@@ -244,8 +245,11 @@ class PadSdkHelper private constructor() {
                         startsWith(DOUBLE_CLICK_CONN4)
                                 || startsWith(DOUBLE_CLICK_DIS_CONN5)
                                 || startsWith(DOUBLE_CLICK_DIS_CONN7)-> {
-                            LDBus.sendSpecial2(EVENT_TO_APP_KEY, EVENT_TYPE_DOUBLE_CLICK, bleDevice)
-                            Log.e(TAG, DOUBLE_CLICK_CONN4 + "已连接时候——双击的广播")
+                            if (!FastSendIntercept.doubleSendIntercept()){
+                                LDBus.sendSpecial2(EVENT_TO_APP_KEY, EVENT_TYPE_DOUBLE_CLICK, bleDevice)
+                                Log.e(TAG, DOUBLE_CLICK_CONN4 + "已连接时候——双击的广播-1")
+                            }
+                            Log.e(TAG, DOUBLE_CLICK_CONN4 + "已连接时候——双击的广播-2")
                         }
                         else -> {
                             Log.e(TAG, "checkDeviceList---其他广播")
@@ -334,6 +338,12 @@ class PadSdkHelper private constructor() {
                     //  返回了单击的事件
                     Log.e(TAG, "设备触发了单击的事件")
                     LDBus.sendSpecial2(EVENT_TO_APP_KEY, EVENT_TYPE_CLICK, bleDevice)
+                    write(
+                        bleDevice,
+                        uuid.toString(),
+                        character?.uuid.toString(),
+                        toDeviceClickResult
+                    )
                 }
             }
         }
