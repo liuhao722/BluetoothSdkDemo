@@ -151,7 +151,7 @@ class PadSdkHelper private constructor() {
 
     /**
      * 连接和通知
-     * @param pick 已经成功配对过了
+     * @param isPaired 已经成功配对过了
      */
     private fun connectionAndNotify(bleDevice: BleDevice, isPaired: Boolean){
         if (!BleManager.getInstance().isConnected(bleDevice)) {
@@ -281,6 +281,12 @@ class PadSdkHelper private constructor() {
                             Log.e(TAG, "提示返回成功")
                         }
                         result.startsWith(RESULT_DATA_TIME_OUT) -> {
+                            write(
+                                bleDevice,
+                                uuid.toString(),
+                                character?.uuid.toString(),
+                                failToDeviceFlash
+                            )
                             Log.e(TAG, "提示返回超时")
                         }
                     }
@@ -317,6 +323,12 @@ class PadSdkHelper private constructor() {
                     //  返回了mac地址
                     Log.e(TAG, "设备返回的mac地址:$result")
                     MeKV.setConnMacId(result)
+                    write(
+                        bleDevice,
+                        uuid.toString(),
+                        character?.uuid.toString(),
+                        successToDeviceFlash
+                    )
                 }
                 result.startsWith(RESULT_DATA_TYPE_CLICK) -> {
                     //  返回了单击的事件
@@ -326,36 +338,6 @@ class PadSdkHelper private constructor() {
             }
         }
     }
-
-
-//    /**
-//     * 连接设备
-//     * @param macID 链接的mac地址
-//     */
-//    fun connect(macID: String) {
-//        BleManager.getInstance().connect(macID, object : BleGattCallback() {
-//            override fun onStartConnect() {
-//                LDBus.sendSpecial2(EVENT_TO_APP_KEY, EVENT_START_CONNECTION, macID)
-//            }
-//
-//            override fun onConnectFail(bleDevice: BleDevice, exception: BleException) {
-//                LDBus.sendSpecial2(EVENT_TO_APP_KEY, EVENT_CONNECTION_FAIL, exception)
-//            }
-//
-//            override fun onConnectSuccess(bleDevice: BleDevice, gatt: BluetoothGatt, status: Int) {
-//                LDBus.sendSpecial2(EVENT_TO_APP_KEY, EVENT_CONNECTION_SUCCESS, gatt)
-//            }
-//
-//            override fun onDisConnected(
-//                isActiveDisConnected: Boolean,
-//                bleDevice: BleDevice,
-//                gatt: BluetoothGatt,
-//                status: Int
-//            ) {
-//                LDBus.sendSpecial2(EVENT_TO_APP_KEY, EVENT_DIS_CONNECTION, gatt)
-//            }
-//        })
-//    }
 
     /**
      * 取消扫描

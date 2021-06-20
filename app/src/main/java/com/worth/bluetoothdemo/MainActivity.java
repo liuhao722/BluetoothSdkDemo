@@ -60,8 +60,8 @@ public class MainActivity extends AppCompatActivity {
             if (eventKey != null && (key = (int) eventKey) > 0) {
                 switch (key) {
                     case EVENT_START_SCAN:                                                          //  开始扫描-做上次扫描数据清理工作
-                        if (mBleDevice!=null){
-                            Log.e(TAG, "mBleDevice:\t"+HexUtil.formatHexString(mBleDevice.getScanRecord()));
+                        if (mBleDevice != null) {
+                            Log.e(TAG, "mBleDevice:\t" + HexUtil.formatHexString(mBleDevice.getScanRecord()));
                         }
                         // 可做loading弹窗
 //                        mScanResultList.clear();
@@ -92,7 +92,8 @@ public class MainActivity extends AppCompatActivity {
                         // 可做断开连接提示
                         break;
 
-                    case EVENT_TYPE:break;
+                    case EVENT_TYPE:
+                        break;
                 }
             }
             return null;
@@ -104,16 +105,20 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.btn_search).setOnClickListener(v -> {
             checkPermissions();
             if (checkGPSIsOpen()) {
-                padSdkHelper.scanDevices(5000,"proximity", "iMEMBER");
+                padSdkHelper.scanDevices(5000, "proximity", "iMEMBER");
             }
         });
 
         findViewById(R.id.btn_conn).setOnClickListener(v -> {
-            padSdkHelper.connect(mBleDevice);
+            if (mBleDevice != null) {
+                padSdkHelper.connect(mBleDevice);
+            }
         });
 
         findViewById(R.id.btn_dis_conn).setOnClickListener(v -> {
-            padSdkHelper.disconnect(mBleDevice);
+            if (mBleDevice != null) {
+                padSdkHelper.disconnect(mBleDevice);
+            }
         });
 
         findViewById(R.id.btn_all_devices).setOnClickListener(v -> {
