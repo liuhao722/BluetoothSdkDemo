@@ -4,11 +4,9 @@ import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattService
 import android.util.Log
-import com.clj.fastble.data.BleDevice
 import com.clj.fastble.utils.HexUtil
 import com.worth.bluetooth.business.gloable.TO_PAIRED_START_KEY
 import com.worth.bluetooth.business.gloable.TO_PAIRED_START_KEY1
-import com.worth.framework.base.core.utils.L
 
 
 /**

@@ -99,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.btn_search).setOnClickListener(v -> {
             checkPermissions();
             if (checkGPSIsOpen()) {
-                padSdkHelper.scanDevices("proximity", "iMEMBER");
+                padSdkHelper.scanDevices(5000,"proximity", "iMEMBER");
             }
         });
 

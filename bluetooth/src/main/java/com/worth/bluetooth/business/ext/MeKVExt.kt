@@ -10,9 +10,11 @@ import com.worth.framework.base.core.storage.MeKVUtil
  * Description: This is MeKVExt
  */
 const val PAD_SDK_KEY_APP_MAC_ID =
-    "pad_sdk_key_app_mac_id"                                         //  macId的key
+    "pad_sdk_key_app_mac_id"                                                //  macId的key
+const val PAD_SDK_KEY_CONNECTION_MAC_ID =
+    "pad_sdk_key_connection_mac_id"                                         //  连接的macId的key
 const val PAD_SDK_KEY_PHONE_TYPE =
-    "pad_sdk_key_phone_type"                                         //  手机类型
+    "pad_sdk_key_phone_type"                                                //  手机类型
 
 /**
  * 设置当前的macId
@@ -25,6 +27,18 @@ fun MeKV.setMacId(macId: String) {
  * 获取当前的macId
  */
 fun MeKV.getMacId() = MeKVUtil.get(PAD_SDK_KEY_APP_MAC_ID, "20:15:03:18:08:63")
+
+/**
+ * 设置当前连接的macId
+ */
+fun MeKV.setConnMacId(macId: String) {
+    MeKVUtil.set(PAD_SDK_KEY_CONNECTION_MAC_ID, macId)
+}
+
+/**
+ * 获取当前连接的macId
+ */
+fun MeKV.getConnMacId() = MeKVUtil.get(PAD_SDK_KEY_CONNECTION_MAC_ID, "20:15:03:18:08:63")
 
 
 /**

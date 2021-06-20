@@ -39,7 +39,8 @@ const val EVENT_TYPE_DOUBLE_CLICK = 0x20_000_302                                
 const val UNPAIRED = "038011bb"                                                                     //  未配对
 const val AFTER_PAIRED = "018011bb"                                                                 //  成功配对后的广播
 const val LONG_PRESS = "0b8011bb"                                                                   //  长按10秒广播
-const val CLICK = "048011bb"                                                                        //  单击广播
+@Deprecated(message = "单击无广播")
+const val CLICK = "048011bb"                                                                        //  单击无广播
 const val DOUBLE_CLICK = "048011bb"                                                                 //  双击广播
 
 const val TO_PAIRED_START_KEY = "0000ffe0"                                                          //  配对时候的uuid前缀的service

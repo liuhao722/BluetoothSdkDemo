@@ -13,6 +13,7 @@ import com.clj.fastble.data.BleDevice
 import com.clj.fastble.exception.BleException
 import com.clj.fastble.scan.BleScanRuleConfig
 import com.clj.fastble.utils.HexUtil
+import com.worth.bluetooth.business.ext.setConnMacId
 import com.worth.bluetooth.business.ext.setMacId
 import com.worth.bluetooth.business.ext.setPhoneType
 import com.worth.bluetooth.business.gloable.*
@@ -76,7 +77,10 @@ class PadSdkHelper private constructor() {
      * @param bluetoothName 过滤蓝牙的前缀名称
      */
     @JvmOverloads
-    fun scanDevices(scanTimeOut: Long = 5000, vararg bluetoothName: String) {
+    fun scanDevices(
+        scanTimeOut: Long = 5000,
+        vararg bluetoothName: String = arrayOf("proximity", "iMEMBER")
+    ) {
         initScanRule(scanTimeOut, *bluetoothName)
         BleManager.getInstance().scan(object : BleScanCallback() {
             override fun onScanStarted(success: Boolean) {
@@ -126,7 +130,6 @@ class PadSdkHelper private constructor() {
             when {
                 startsWith(UNPAIRED) -> {
                     if (!BleManager.getInstance().isConnected(bleDevice)) {
-                        cancelScan()
                         BleManager.getInstance().connect(bleDevice, object : BleGattCallback() {
                             override fun onStartConnect() {
                                 LDBus.sendSpecial2(
@@ -184,19 +187,25 @@ class PadSdkHelper private constructor() {
                                 gatt: BluetoothGatt,
                                 status: Int
                             ) {
+                                scanDevices();
                                 LDBus.sendSpecial2(EVENT_TO_APP_KEY, EVENT_DIS_CONNECTION, gatt)
                             }
                         })
+                    }else{
+
                     }
                 }
                 startsWith(AFTER_PAIRED) -> {
-
+                    Log.e(TAG, AFTER_PAIRED + "配对成功后的广播")
                 }
                 startsWith(LONG_PRESS) -> {
-
+                    Log.e(TAG, LONG_PRESS + "长按的广播")
                 }
-                startsWith(CLICK) -> {
-
+                startsWith(DOUBLE_CLICK) -> {
+                    Log.e(TAG, DOUBLE_CLICK + "双击的广播")
+                }
+                else -> {
+                    Log.e(TAG, DOUBLE_CLICK + "其他广播")
                 }
             }
         }
@@ -265,6 +274,7 @@ class PadSdkHelper private constructor() {
                     result = result.substring(4)
                     //  返回了mac地址
                     Log.e(TAG, "返回了mac地址:$result")
+                    MeKV.setConnMacId(result)
                 }
                 result.startsWith(RESULT_DATA_TYPE_CLICK) -> {
                     //  返回了单击的事件
