@@ -2,27 +2,31 @@ package com.worth.bluetoothdemo;
 
 import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import com.clj.fastble.callback.BleScanCallback;
 import com.clj.fastble.data.BleDevice;
 import com.worth.bluetooth.business.enter.PadSdkHelper;
-import com.worth.framework.base.core.utils.L;
+import com.worth.framework.base.core.utils.LDBus;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+
+import static com.worth.bluetooth.business.gloable.PadSdkConstantKt.EVENT_CONNECTION_FAIL;
+import static com.worth.bluetooth.business.gloable.PadSdkConstantKt.EVENT_CONNECTION_SUCCESS;
+import static com.worth.bluetooth.business.gloable.PadSdkConstantKt.EVENT_DIS_CONNECTION;
+import static com.worth.bluetooth.business.gloable.PadSdkConstantKt.EVENT_SCANNING;
+import static com.worth.bluetooth.business.gloable.PadSdkConstantKt.EVENT_SCAN_FINISH;
+import static com.worth.bluetooth.business.gloable.PadSdkConstantKt.EVENT_START_CONNECTION;
+import static com.worth.bluetooth.business.gloable.PadSdkConstantKt.EVENT_START_SCAN;
+import static com.worth.bluetooth.business.gloable.PadSdkConstantKt.EVENT_TO_APP_KEY;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -30,12 +34,13 @@ public class MainActivity extends AppCompatActivity {
     private final int PERMISSION_REQUEST_CODE = 1000;
     private PadSdkHelper padSdkHelper;
     private List<BleDevice> mScanResultList;
+    private BleDevice mBleDevice;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        initPermission();       //  初始化百度sdk依赖的权限
+        initPermission();       //  初始化依赖的权限
         initView();
         initSdk();              //  初始化sdk
         initObserver();         //  监听sdk错误的返回
@@ -47,85 +52,100 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void initObserver() {
+        LDBus.INSTANCE.observer2(EVENT_TO_APP_KEY, (eventKey, objectParams) -> {
+            int key;
+            if (eventKey != null && (key = (int) eventKey) > 0) {
+                switch (key) {
+                    case EVENT_START_SCAN:                                                          //  开始扫描-做上次扫描数据清理工作
+                        // 可做loading弹窗
+                        mScanResultList.clear();
+                        break;
+                    case EVENT_SCANNING:                                                            //  扫描中-可添加到自定义的list中 每次扫描到就展示到自定义的adapter中
+                        if (objectParams != null && objectParams instanceof BleDevice) {
+                            mBleDevice = (BleDevice) objectParams;
+                        }
+                        break;
+                    case EVENT_SCAN_FINISH:                                                         //  扫描结束-数据列表展示
+                        //  可做dismiss 结束loading弹窗
+                        if (objectParams != null) {
+                            mScanResultList = (List<BleDevice>) objectParams;
+                            showScanResult(mScanResultList);
+                        }
+                        break;
+
+                    case EVENT_START_CONNECTION:                                                    //  扫描结束后-开始连接某个设备
+                        // 可做连接的loading弹窗
+                        break;
+                    case EVENT_CONNECTION_FAIL:                                                     //  扫描结束后-连接设备失败
+                        // 可做连接失败提示，并结束连接的loading弹窗
+                        break;
+                    case EVENT_CONNECTION_SUCCESS:                                                  //  扫描结束后-连接设备成功
+                        // 可做连接成功提示，并结束连接的loading弹窗
+                        break;
+                    case EVENT_DIS_CONNECTION:                                                      //  扫描结束后-在链接成功某个设备后，断开和某个设备的链接
+                        // 可做断开连接提示
+                        break;
+                }
+            }
+            return null;
+        });
 
     }
-    List<BleDevice> list = new ArrayList<>();
+
     private void initView() {
         findViewById(R.id.btn_search).setOnClickListener(v -> {
             checkPermissions();
-            if (checkGPSIsOpen()){
-                padSdkHelper.searchDevices(new BleScanCallback() {
-                    @Override
-                    public void onScanStarted(boolean success) {
-                        // 开始扫描前
-                        L.e("onScanStarted");
-                        list.clear();
-                    }
-
-                    @Override
-                    public void onLeScan(BleDevice bleDevice) {
-                        super.onLeScan(bleDevice);
-                        L.e("onLeScan"+(bleDevice == null));
-                    }
-
-                    @Override
-                    public void onScanning(BleDevice bleDevice) {
-                        //  扫描中-扫描到符合规则的设备
-                        list.add(bleDevice);
-                        L.e("onScanning"+(bleDevice == null));
-                    }
-
-                    @Override
-                    public void onScanFinished(List<BleDevice> scanResultList) {
-                        //  扫描结束-返回所有符合规则的设备
-                        mScanResultList = scanResultList;
-                        showScanResult(mScanResultList);
-                        showScanResult(list);
-                    }
-                },"proximity","iMEMBER");
+            if (checkGPSIsOpen()) {
+                padSdkHelper.scanDevices("proximity", "iMEMBER");
             }
         });
+
         findViewById(R.id.btn_conn).setOnClickListener(v -> {
-            padSdkHelper.connect("macId");
-//            padSdkHelper.connect(devices);
-//            padSdkHelper.scanAndConnect();
+            padSdkHelper.connect(mBleDevice);
         });
+
         findViewById(R.id.btn_dis_conn).setOnClickListener(v -> {
-//            padSdkHelper.disconnect(devices);
-            padSdkHelper.disconnectAllDevice();
+            padSdkHelper.disconnect(mBleDevice);
         });
+
         findViewById(R.id.btn_all_devices).setOnClickListener(v -> {
-            Set<BluetoothDevice> list = padSdkHelper.getConnectedDevices();
-            //  获取已连接的全部设备信息
+            List<BleDevice> list = padSdkHelper.getConnectedDevices();                              //  获取已连接的全部设备信息
+            LogHelper.printAndShowScanResult(list);
         });
     }
 
     private void showScanResult(List<BleDevice> list) {
-        if (!list.isEmpty()) {
-            StringBuilder sb = new StringBuilder();
-            for (BleDevice item : list) {
-                sb.append("蓝牙名称:\t" + item.getName())
-                        .append("\tmac地址:\t" + item.getMac())
-                        .append("\trssi信号:\t" + item.getRssi())
-                        .append("\tkey:\t" + item.getKey())
-                        .append("\tdevices:\t" + item.getDevice().toString())
-                        .append("\tscanRecord:\t" + item.getScanRecord().toString())
-                        .append("\n");
-            }
-            TextView tv = findViewById(R.id.tv_result_list);
-            tv.setText(sb.toString());
-        }
+        TextView tv = findViewById(R.id.tv_result_list);
+        tv.setText(LogHelper.printAndShowScanResult(list));
     }
+
     private void checkPermissions() {
         BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (!bluetoothAdapter.isEnabled()) {
-            Toast.makeText(this, "蓝牙处于关闭状态，请打开蓝牙", Toast.LENGTH_LONG).show();
+//            Toast.makeText(this, "蓝牙处于关闭状态，请打开蓝牙", Toast.LENGTH_LONG).show();
             padSdkHelper.onBlueTooth();
             return;
         }
     }
+
     /**
      * android 6.0 以上需要动态申请权限
+     *    <!--    蓝牙所需权限，可能扫描时候还需要一个位置-->
+     *     <uses-permission android:name="android.permission.BLUETOOTH" />
+     *     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+     *     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+     *     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+     *
+     *     <!--    智能设备所需权限 sdk需要的-->
+     *     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+     *     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+     *     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+     *
+     *
+     *     <!--    基站app需要的-->
+     *     <uses-permission android:name="android.permission.INTERNET" />
+     *     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+     *     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
      */
     private void initPermission() {
         String[] permissions = {
@@ -133,22 +153,16 @@ public class MainActivity extends AppCompatActivity {
                 Manifest.permission.ACCESS_NETWORK_STATE,
                 Manifest.permission.WRITE_SETTINGS,
                 Manifest.permission.ACCESS_WIFI_STATE,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE, // demo使用
+                Manifest.permission.CHANGE_WIFI_STATE,
+                Manifest.permission.CHANGE_WIFI_MULTICAST_STATE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
 
                 Manifest.permission.BLUETOOTH,
                 Manifest.permission.BLUETOOTH_ADMIN,
                 Manifest.permission.ACCESS_COARSE_LOCATION,
                 Manifest.permission.ACCESS_FINE_LOCATION,
-
-                /* 下面是蓝牙用的，可以不申请
-                Manifest.permission.BROADCAST_STICKY,
-                Manifest.permission.BLUETOOTH,
-                Manifest.permission.BLUETOOTH_ADMIN
-                */
         };
-
         ArrayList<String> toApplyList = new ArrayList<String>();
-
         for (String perm : permissions) {
             if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(this, perm)) {
                 toApplyList.add(perm);
@@ -159,8 +173,8 @@ public class MainActivity extends AppCompatActivity {
         if (!toApplyList.isEmpty()) {
             ActivityCompat.requestPermissions(this, toApplyList.toArray(tmpList), PERMISSION_REQUEST_CODE);
         }
-
     }
+
     private boolean checkGPSIsOpen() {
         LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         if (locationManager == null)
@@ -179,5 +193,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        padSdkHelper.release();
     }
 }
