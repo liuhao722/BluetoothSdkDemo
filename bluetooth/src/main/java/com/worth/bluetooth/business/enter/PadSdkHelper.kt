@@ -17,7 +17,6 @@ import com.worth.bluetooth.business.ext.setConnMacId
 import com.worth.bluetooth.business.ext.setMacId
 import com.worth.bluetooth.business.ext.setPhoneType
 import com.worth.bluetooth.business.gloable.*
-import com.worth.bluetooth.business.utils.BluetoothUtil
 import com.worth.bluetooth.business.utils.FastSendIntercept
 import com.worth.bluetooth.business.utils.PadSdkGlobalHandler
 import com.worth.bluetooth.business.utils.ParseHelper
@@ -252,7 +251,7 @@ class PadSdkHelper private constructor() {
                             Log.e(TAG, DOUBLE_CLICK_CONN4 + "已连接时候——双击的广播-2")
                         }
                         else -> {
-                            Log.e(TAG, "checkDeviceList---其他广播")
+                            Log.e(TAG, "未配对过，需要手动点击配对")
                         }
                     }
                 }
@@ -279,10 +278,10 @@ class PadSdkHelper private constructor() {
                     result = result.substring(4)
                     when {
                         result.startsWith(RESULT_DATA_FAIL) -> {
-                            Log.e(TAG, "提示返回错误")
+                            Log.e(TAG, "配对错误")
                         }
                         result.startsWith(RESULT_DATA_OK) -> {
-                            Log.e(TAG, "提示返回成功")
+                            Log.e(TAG, "配对成功")
                         }
                         result.startsWith(RESULT_DATA_TIME_OUT) -> {
                             write(
@@ -291,7 +290,7 @@ class PadSdkHelper private constructor() {
                                 character?.uuid.toString(),
                                 failToDeviceFlash
                             )
-                            Log.e(TAG, "提示返回超时")
+                            Log.e(TAG, "配对超时")
                         }
                     }
                 }
@@ -429,7 +428,7 @@ class PadSdkHelper private constructor() {
      * 打开蓝牙
      */
     fun onBlueTooth() {
-        if (BleManager.getInstance().isSupportBle) {
+        if (checkBlueToothEnable()) {
             BleManager.getInstance().enableBluetooth()
         }
     }
@@ -438,7 +437,7 @@ class PadSdkHelper private constructor() {
      * 关闭蓝牙
      */
     fun offBlueTooth() {
-        if (BleManager.getInstance().isSupportBle) {
+        if (checkBlueToothEnable()) {
             BleManager.getInstance().disableBluetooth()
         }
     }
@@ -447,7 +446,7 @@ class PadSdkHelper private constructor() {
      * 去设置页面打开蓝牙操作
      */
     fun toSettingBluetooth(activity: Activity) {
-        if (BleManager.getInstance().isSupportBle) {
+        if (checkBlueToothEnable()) {
             val blueTooth = Intent(Settings.ACTION_BLUETOOTH_SETTINGS)
             activity.startActivity(blueTooth)
         }
@@ -464,22 +463,6 @@ class PadSdkHelper private constructor() {
     val connectedDevices: List<BleDevice>?
         get() = BleManager.getInstance().allConnectedDevice
 
-    /**
-     * 可发现模式
-     * 默认情况下，设备的可发现模式会持续120秒。
-     * 通过给Intent对象添加EXTRA_DISCOVERABLE_DURATION附加字段，可以定义不同持续时间。目前设置300秒
-     * 应用程序能够设置的最大持续时间是3600秒
-     */
-    fun discoverableDuration(activity: Activity) {
-        BluetoothUtil.instance.discoverableDuration(activity)
-    }
-
-    /**
-     * 清理蓝牙缓存
-     */
-    fun refreshDeviceCache(): Boolean {
-        return BluetoothUtil.instance.refreshDeviceCache()
-    }
 
     @JvmOverloads
     fun notify(

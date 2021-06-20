@@ -17,8 +17,8 @@ object FastSendIntercept {
         val curr = System.currentTimeMillis()
         if (curr - lastTime > intervalTime) {
             lastTime = curr
-            return true
+            return false
         }
-        return false
+        return true
     }
 }
