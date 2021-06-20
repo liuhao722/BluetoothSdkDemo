@@ -1,5 +1,7 @@
 package com.worth.bluetooth.business.gloable
 
+import com.clj.fastble.utils.HexUtil
+
 /**
  * Author:  LiuHao
  * Email:   114650501@qq.com
@@ -9,9 +11,8 @@ package com.worth.bluetooth.business.gloable
 
 // 蓝牙指令发送集合
 
-const val BLUETOOTH_TYPE = 0xb1                                                                     //  按键事件
-const val BLUETOOTH_TYPE_CLICK = 0x01                                                               //  单击
-const val BLUETOOTH_TYPE_DOUBLE_CLICK = 0x02                                                        //  双击
+const val BLUETOOTH_TYPE_CLICK = 0xb101                                                             //  单击
+const val BLUETOOTH_TYPE_DOUBLE_CLICK = 0xb102                                                      //  双击
 
 
 const val SERVICE_UUID = "0XFFE0"
@@ -33,6 +34,36 @@ const val EVENT_DIS_CONNECTION = 0x20_000_013                                   
 const val EVENT_TYPE = 0x20_000_300                                                                 //  按键事件
 const val EVENT_TYPE_CLICK = 0x20_000_301                                                           //  单击
 const val EVENT_TYPE_DOUBLE_CLICK = 0x20_000_302                                                    //  双击
+
+
+const val UNPAIRED = "038011bb"                                                                     //  未配对
+const val AFTER_PAIRED = "018011bb"                                                                 //  成功配对后的广播
+const val LONG_PRESS = "0b8011bb"                                                                   //  长按10秒广播
+const val CLICK = "048011bb"                                                                        //  单击广播
+const val DOUBLE_CLICK = "048011bb"                                                                 //  双击广播
+
+const val TO_PAIRED_START_KEY = "0000ffe0"                                                          //  配对时候的uuid前缀的service
+const val TO_PAIRED_START_KEY1 = "0000ffe1"                                                         //  配对时候的clientUUid的前缀读写操作
+
+val checkData: ByteArray = HexUtil.hexStringToBytes("02100104")                           //  配对请求的发送数据
+val resultOk: ByteArray = HexUtil.hexStringToBytes("022001aa")                              //  配对验证成功
+val resultFail: ByteArray = HexUtil.hexStringToBytes("02010101")                            //  配对验证失败
+
+
+
+const val RESULT_FIRST = "01"                                                                       //  返回的第一位
+const val RESULT_DATA_TYPE_OK_FAIL_TIME_OUT = "01"                                                  //  dataType-返回错误、成功、超时
+const val RESULT_DATA_TYPE_MATH_RESULT = "11"                                                       //  dataType-返回计算结果
+const val RESULT_DATA_TYPE_MAC_ADDRESS = "20"                                                       //  dataType-返回mac地址
+const val RESULT_DATA_TYPE_CLICK = "40"                                                             //  dataType-单机按键
+
+
+const val RESULT_DATA_FAIL = "01"                                                                   //  data内容--返回错误
+const val RESULT_DATA_OK = "02"                                                                     //  data内容--返回正确
+const val RESULT_DATA_TIME_OUT = "03"                                                               //  data内容--返回超时
+const val RESULT_DATA_CLICK = "01"                                                                  //  data内容--单击事件
+
+
 
 
 

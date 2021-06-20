@@ -27,13 +27,14 @@ import static com.worth.bluetooth.business.gloable.PadSdkConstantKt.EVENT_SCAN_F
 import static com.worth.bluetooth.business.gloable.PadSdkConstantKt.EVENT_START_CONNECTION;
 import static com.worth.bluetooth.business.gloable.PadSdkConstantKt.EVENT_START_SCAN;
 import static com.worth.bluetooth.business.gloable.PadSdkConstantKt.EVENT_TO_APP_KEY;
+import static com.worth.bluetooth.business.gloable.PadSdkConstantKt.EVENT_TYPE;
 
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private final int PERMISSION_REQUEST_CODE = 1000;
     private PadSdkHelper padSdkHelper;
-    private List<BleDevice> mScanResultList;
+    private List<BleDevice> mScanResultList = new ArrayList<>();
     private BleDevice mBleDevice;
 
     @Override
@@ -85,6 +86,8 @@ public class MainActivity extends AppCompatActivity {
                     case EVENT_DIS_CONNECTION:                                                      //  扫描结束后-在链接成功某个设备后，断开和某个设备的链接
                         // 可做断开连接提示
                         break;
+
+                    case EVENT_TYPE:break;
                 }
             }
             return null;
@@ -124,28 +127,30 @@ public class MainActivity extends AppCompatActivity {
         if (!bluetoothAdapter.isEnabled()) {
 //            Toast.makeText(this, "蓝牙处于关闭状态，请打开蓝牙", Toast.LENGTH_LONG).show();
             padSdkHelper.onBlueTooth();
+            String result = "09";
+            int dataInt = Integer.parseInt(result);
             return;
         }
     }
 
     /**
      * android 6.0 以上需要动态申请权限
-     *    <!--    蓝牙所需权限，可能扫描时候还需要一个位置-->
-     *     <uses-permission android:name="android.permission.BLUETOOTH" />
-     *     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
-     *     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-     *     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-     *
-     *     <!--    智能设备所需权限 sdk需要的-->
-     *     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-     *     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
-     *     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
-     *
-     *
-     *     <!--    基站app需要的-->
-     *     <uses-permission android:name="android.permission.INTERNET" />
-     *     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-     *     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+     * <!--    蓝牙所需权限，可能扫描时候还需要一个位置-->
+     * <uses-permission android:name="android.permission.BLUETOOTH" />
+     * <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+     * <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+     * <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+     * <p>
+     * <!--    智能设备所需权限 sdk需要的-->
+     * <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+     * <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+     * <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+     * <p>
+     * <p>
+     * <!--    基站app需要的-->
+     * <uses-permission android:name="android.permission.INTERNET" />
+     * <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+     * <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
      */
     private void initPermission() {
         String[] permissions = {
