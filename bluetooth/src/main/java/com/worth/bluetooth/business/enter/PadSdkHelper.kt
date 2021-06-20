@@ -35,6 +35,7 @@ class PadSdkHelper private constructor() {
     private val TAG = "PadSdkHelper"
     private val isAutoConnect: Boolean = false  //  是否自动重连
     private val context = application
+    private var scanResultListTemp: MutableList<BleDevice> = mutableListOf()
 
     /**
      * 初始化sdk
@@ -96,6 +97,7 @@ class PadSdkHelper private constructor() {
             override fun onScanFinished(scanResultList: MutableList<BleDevice>?) {
                 scanResultList?.run {
                     checkDeviceList(this)
+                    if (scanResultListTemp.isNotEmpty() && scanResultListTemp == scanResultList) return
                     LDBus.sendSpecial2(EVENT_TO_APP_KEY, EVENT_SCAN_FINISH, this)
                 } ?: run {
                     LDBus.sendSpecial2(
@@ -140,7 +142,7 @@ class PadSdkHelper private constructor() {
         result?.run {
             when {
                 startsWith(UNPAIRED) -> {
-                    connectionAndNotify(bleDevice,false)
+                    connectionAndNotify(bleDevice, false)
                 }
                 else -> {
                     Log.e(TAG, "checkDevice--其他广播")
@@ -153,7 +155,7 @@ class PadSdkHelper private constructor() {
      * 连接和通知
      * @param isPaired 已经成功配对过了
      */
-    private fun connectionAndNotify(bleDevice: BleDevice, isPaired: Boolean){
+    private fun connectionAndNotify(bleDevice: BleDevice, isPaired: Boolean) {
         if (!BleManager.getInstance().isConnected(bleDevice)) {
             BleManager.getInstance().connect(bleDevice, object : BleGattCallback() {
                 override fun onStartConnect() {
@@ -198,7 +200,7 @@ class PadSdkHelper private constructor() {
                             }
                         )
 
-                        if (!isPaired){  //  已经配对过了 不需要再次校验data
+                        if (!isPaired) {  //  已经配对过了 不需要再次校验data
                             write(
                                 bleDevice,
                                 uuid.toString(),
@@ -220,14 +222,14 @@ class PadSdkHelper private constructor() {
                 }
             })
         } else {
-            Log.e(TAG,"当前设备已连接-不进行逻辑处理")
+            Log.e(TAG, "当前设备已连接-不进行逻辑处理")
         }
     }
 
     /**
      * 扫描结果发现是长按的事件且未连接该设备
      */
-   private fun checkDeviceList(devices: List<BleDevice>){
+    private fun checkDeviceList(devices: List<BleDevice>) {
         devices?.forEach { bleDevice ->
             if (!BleManager.getInstance().isConnected(bleDevice)) {
                 val result = ParseHelper.instance.parseRecord(bleDevice.scanRecord)
@@ -243,15 +245,19 @@ class PadSdkHelper private constructor() {
                         }
                         startsWith(DOUBLE_CLICK_CONN4)
                                 || startsWith(DOUBLE_CLICK_DIS_CONN5)
-                                || startsWith(DOUBLE_CLICK_DIS_CONN7)-> {
-                            if (!FastSendIntercept.doubleSendIntercept()){
-                                LDBus.sendSpecial2(EVENT_TO_APP_KEY, EVENT_TYPE_DOUBLE_CLICK, bleDevice)
+                                || startsWith(DOUBLE_CLICK_DIS_CONN7) -> {
+                            if (!FastSendIntercept.doubleSendIntercept()) {
+                                LDBus.sendSpecial2(
+                                    EVENT_TO_APP_KEY,
+                                    EVENT_TYPE_DOUBLE_CLICK,
+                                    bleDevice
+                                )
                                 Log.e(TAG, DOUBLE_CLICK_CONN4 + "已连接时候——双击的广播-1")
                             }
                             Log.e(TAG, DOUBLE_CLICK_CONN4 + "已连接时候——双击的广播-2")
                         }
                         else -> {
-                            Log.e(TAG, "未配对过，需要手动点击配对")
+                            Log.e(TAG, "未配对过，需要手动点击配对--app端拿到list之后进行操作")
                         }
                     }
                 }
