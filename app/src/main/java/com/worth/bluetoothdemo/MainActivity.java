@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -13,6 +14,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.clj.fastble.data.BleDevice;
+import com.clj.fastble.utils.HexUtil;
 import com.worth.bluetooth.business.enter.PadSdkHelper;
 import com.worth.framework.base.core.utils.LDBus;
 
@@ -58,8 +60,11 @@ public class MainActivity extends AppCompatActivity {
             if (eventKey != null && (key = (int) eventKey) > 0) {
                 switch (key) {
                     case EVENT_START_SCAN:                                                          //  开始扫描-做上次扫描数据清理工作
+                        if (mBleDevice!=null){
+                            Log.e(TAG, "mBleDevice:\t"+HexUtil.formatHexString(mBleDevice.getScanRecord()));
+                        }
                         // 可做loading弹窗
-                        mScanResultList.clear();
+//                        mScanResultList.clear();
                         break;
                     case EVENT_SCANNING:                                                            //  扫描中-可添加到自定义的list中 每次扫描到就展示到自定义的adapter中
                         if (objectParams != null && objectParams instanceof BleDevice) {

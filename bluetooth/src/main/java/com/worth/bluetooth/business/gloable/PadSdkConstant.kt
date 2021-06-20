@@ -41,7 +41,9 @@ const val AFTER_PAIRED = "018011bb"                                             
 const val LONG_PRESS = "0b8011bb"                                                                   //  长按10秒广播
 @Deprecated(message = "单击无广播")
 const val CLICK = "048011bb"                                                                        //  单击无广播
-const val DOUBLE_CLICK = "048011bb"                                                                 //  双击广播
+const val DOUBLE_CLICK_CONN4 = "048011bb"                                                           //  双击广播-4--连接状态下
+const val DOUBLE_CLICK_DIS_CONN5 = "058011bb"                                                       //  双击广播-5--配对状态下断开链接
+const val DOUBLE_CLICK_DIS_CONN7 = "078011bb"                                                       //  双击广播-7--未配对状态下断开链接
 
 const val TO_PAIRED_START_KEY = "0000ffe0"                                                          //  配对时候的uuid前缀的service
 const val TO_PAIRED_START_KEY1 = "0000ffe1"                                                         //  配对时候的clientUUid的前缀读写操作
