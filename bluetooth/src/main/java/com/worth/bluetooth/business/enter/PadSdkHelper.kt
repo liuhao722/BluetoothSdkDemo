@@ -212,19 +212,19 @@ class PadSdkHelper private constructor() {
      */
     private fun checkDeviceList(devices: List<BleDevice>) :List<BleDevice>{
         return devices?.filter {device ->
-            var resultFind = false
+            var find = false
             val result = ParseHelper.instance.parseRecord(device.scanRecord)
             result?.run {
                 when {
                     startsWith(AFTER_PAIRED) -> {
 //                            connectionAndNotify(bleDevice, true)                                  //  应要求关闭
                         Log.e(TAG, "配对成功，扫描到该设备的广播，目前进行直接连接处理")
-                        resultFind = true
+                        find = true
                     }
                     startsWith(LONG_PRESS) -> {
                         Log.e(TAG, "长按10秒配对的广播")
 //                            connectionAndNotify(bleDevice, false)                                 //  执行配对流程--关闭，扫描时候如果是未配对的状态下，不进行数据的返回
-                        resultFind = true
+                        find = true
                     }
                     startsWith(DOUBLE_CLICK_CONN4)
                             || startsWith(DOUBLE_CLICK_DIS_CONN5)
@@ -235,15 +235,15 @@ class PadSdkHelper private constructor() {
                         } else {
                             Log.e(TAG, "20秒内收到重复双击广播信号，只处理一次服务请求")
                         }
-                        resultFind = false
+                        find = false
                     }
                     else -> {
                         Log.e(TAG, "未配对过，需要手动点击配对--app端拿到list之后进行操作")
-                        resultFind = false
+                        find = false
                     }
                 }
             }
-             resultFind
+             find
         }
     }
 //    /**
