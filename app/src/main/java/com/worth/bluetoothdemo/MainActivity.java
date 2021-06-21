@@ -20,16 +20,16 @@ import com.worth.framework.base.core.utils.LDBus;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.worth.bluetooth.business.gloable.PadSdkConstantKt.EVENT_CONNECTION_FAIL;
-import static com.worth.bluetooth.business.gloable.PadSdkConstantKt.EVENT_CONNECTION_SUCCESS;
-import static com.worth.bluetooth.business.gloable.PadSdkConstantKt.EVENT_DIS_CONNECTION;
-import static com.worth.bluetooth.business.gloable.PadSdkConstantKt.EVENT_SCANNING;
-import static com.worth.bluetooth.business.gloable.PadSdkConstantKt.EVENT_SCAN_FINISH;
-import static com.worth.bluetooth.business.gloable.PadSdkConstantKt.EVENT_START_CONNECTION;
-import static com.worth.bluetooth.business.gloable.PadSdkConstantKt.EVENT_START_SCAN;
-import static com.worth.bluetooth.business.gloable.PadSdkConstantKt.EVENT_TO_APP_KEY;
-import static com.worth.bluetooth.business.gloable.PadSdkConstantKt.EVENT_TYPE_CLICK;
-import static com.worth.bluetooth.business.gloable.PadSdkConstantKt.EVENT_TYPE_DOUBLE_CLICK;
+import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.CONN_FAIL;
+import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.CONN_OK;
+import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.DIS_CONN;
+import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.SCANNING;
+import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.SCAN_FINISH;
+import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.START_CONN;
+import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.START_SCAN;
+import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.EVENT_TO_APP;
+import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.CLICK;
+import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.DOUBLE_CLICK;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -55,19 +55,19 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void initObserver() {
-        LDBus.INSTANCE.observer2(EVENT_TO_APP_KEY, (eventKey, objectParams) -> {
+        LDBus.INSTANCE.observer2(EVENT_TO_APP, (eventKey, objectParams) -> {
             int key;
             if (eventKey != null && (key = (int) eventKey) > 0) {
                 switch (key) {
-                    case EVENT_START_SCAN:                                                          //  开始扫描-做上次扫描数据清理工作
+                    case START_SCAN:                                                          //  开始扫描-做上次扫描数据清理工作
                         // 可做loading弹窗
                         break;
-                    case EVENT_SCANNING:                                                            //  扫描中-可添加到自定义的list中 每次扫描到就展示到自定义的adapter中
+                    case SCANNING:                                                            //  扫描中-可添加到自定义的list中 每次扫描到就展示到自定义的adapter中
                         if (objectParams != null && objectParams instanceof BleDevice) {
                             mBleDevice = (BleDevice) objectParams;
                         }
                         break;
-                    case EVENT_SCAN_FINISH:                                                         //  扫描结束-数据列表展示
+                    case SCAN_FINISH:                                                         //  扫描结束-数据列表展示
                         //  可做dismiss 结束loading弹窗
                         if (objectParams != null) {
                             mScanResultList = (List<BleDevice>) objectParams;
@@ -75,22 +75,22 @@ public class MainActivity extends AppCompatActivity {
                         }
                         break;
 
-                    case EVENT_START_CONNECTION:                                                    //  扫描结束后-开始连接某个设备
+                    case START_CONN:                                                    //  扫描结束后-开始连接某个设备
                         // 可做连接的loading弹窗
                         break;
-                    case EVENT_CONNECTION_FAIL:                                                     //  扫描结束后-连接设备失败
+                    case CONN_FAIL:                                                     //  扫描结束后-连接设备失败
                         // 可做连接失败提示，并结束连接的loading弹窗
                         break;
-                    case EVENT_CONNECTION_SUCCESS:                                                  //  扫描结束后-连接设备成功
+                    case CONN_OK:                                                  //  扫描结束后-连接设备成功
                         // 可做连接成功提示，并结束连接的loading弹窗
                         break;
-                    case EVENT_DIS_CONNECTION:                                                      //  扫描结束后-在链接成功某个设备后，断开和某个设备的链接
+                    case DIS_CONN:                                                      //  扫描结束后-在链接成功某个设备后，断开和某个设备的链接
                         // 可做断开连接提示
                         break;
 
-                    case EVENT_TYPE_CLICK:
+                    case CLICK:
                         break;
-                    case EVENT_TYPE_DOUBLE_CLICK:
+                    case DOUBLE_CLICK:
                         break;
                 }
             }
@@ -134,7 +134,7 @@ public class MainActivity extends AppCompatActivity {
         BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (!bluetoothAdapter.isEnabled()) {
 //            Toast.makeText(this, "蓝牙处于关闭状态，请打开蓝牙", Toast.LENGTH_LONG).show();
-            padSdkHelper.onBlueTooth();
+            padSdkHelper.onOrOffBlueTooth(true);
             return;
         }
     }

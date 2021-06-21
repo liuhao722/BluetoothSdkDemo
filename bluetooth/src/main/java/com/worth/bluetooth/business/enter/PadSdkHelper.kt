@@ -15,7 +15,6 @@ import com.clj.fastble.scan.BleScanRuleConfig
 import com.clj.fastble.utils.HexUtil
 import com.worth.bluetooth.business.ext.setConnMacId
 import com.worth.bluetooth.business.ext.setMacId
-import com.worth.bluetooth.business.ext.setPhoneType
 import com.worth.bluetooth.business.gloable.*
 import com.worth.bluetooth.business.utils.FastSendIntercept
 import com.worth.bluetooth.business.utils.PadSdkGlobalHandler
@@ -53,7 +52,6 @@ class PadSdkHelper private constructor() {
         reConnectCountInterval: Long = 5000,
         connectOverTime: Long = 20000
     ): PadSdkHelper {
-//        PadSdkExt.instance.register(context)
         BleManager.getInstance().init(context)
         BleManager.getInstance()
             .enableLog(true)
@@ -96,12 +94,12 @@ class PadSdkHelper private constructor() {
 
     private val bleScanCallback = object : BleScanCallback() {
         override fun onScanStarted(success: Boolean) {
-            LDBus.sendSpecial2(EVENT_TO_APP_KEY, EVENT_START_SCAN, "")
+            LDBus.sendSpecial2(EVENT_TO_APP, START_SCAN, "")
         }
 
         override fun onScanning(bleDevice: BleDevice?) {
             bleDevice?.run {
-                LDBus.sendSpecial2(EVENT_TO_APP_KEY, EVENT_SCANNING, this)
+                LDBus.sendSpecial2(EVENT_TO_APP, SCANNING, this)
             }
         }
 
@@ -109,11 +107,11 @@ class PadSdkHelper private constructor() {
             scanResultList?.run {
                 checkDeviceList(this)
                 if (scanResultListTemp.isNotEmpty() && scanResultListTemp == scanResultList) return
-                LDBus.sendSpecial2(EVENT_TO_APP_KEY, EVENT_SCAN_FINISH, this)
+                LDBus.sendSpecial2(EVENT_TO_APP, SCAN_FINISH, this)
             } ?: run {
                 LDBus.sendSpecial2(
-                    EVENT_TO_APP_KEY,
-                    EVENT_SCAN_FINISH,
+                    EVENT_TO_APP,
+                    SCAN_FINISH,
                     mutableListOf<BleDevice>()
                 )
             }
@@ -125,17 +123,9 @@ class PadSdkHelper private constructor() {
     }
 
     /**
-     * 设置使用设备的类型
-     */
-    fun setPhoneType(isPad: Boolean = true): PadSdkHelper {
-        isPad?.let { MeKV.setPhoneType(it) }
-        return this
-    }
-
-    /**
      * 设置macId
      */
-    fun setMacId(macId: String?): PadSdkHelper {
+    internal fun setMacId(macId: String?): PadSdkHelper {
         macId?.let { MeKV.setMacId(it) }
         return this
     }
@@ -144,13 +134,7 @@ class PadSdkHelper private constructor() {
      * 连接设备
      */
     fun connect(bleDevice: BleDevice) {
-        checkDevice(bleDevice)  //  校验设备状态
-    }
-
-    /**
-     * 检查设备连接,用户手动点击某个wifi进行连接
-     */
-    private fun checkDevice(bleDevice: BleDevice) {
+        //  检查设备连接,用户手动点击某个wifi进行连接
         val result = ParseHelper.instance.parseRecord(bleDevice.scanRecord)
         result?.run {
             when {
@@ -168,70 +152,53 @@ class PadSdkHelper private constructor() {
      * 连接和通知
      * @param isPaired 已经成功配对过了
      */
-    private fun connectionAndNotify(bleDevice: BleDevice, isPaired: Boolean) {
-        if (!BleManager.getInstance().isConnected(bleDevice)) {
-            BleManager.getInstance().connect(bleDevice, object : BleGattCallback() {
+    private fun connectionAndNotify(bd: BleDevice, isPaired: Boolean) {
+        if (!BleManager.getInstance().isConnected(bd)) {
+            BleManager.getInstance().connect(bd, object : BleGattCallback() {
                 override fun onStartConnect() {
                     conn = false
-                    LDBus.sendSpecial2(
-                        EVENT_TO_APP_KEY,
-                        EVENT_START_CONNECTION,
-                        bleDevice
-                    )
+                    LDBus.sendSpecial2(EVENT_TO_APP, START_CONN, bd)
                 }
 
-                override fun onConnectFail(
-                    bleDevice: BleDevice,
-                    exception: BleException
-                ) {
+                override fun onConnectFail(bd: BleDevice, ex: BleException) {
                     conn = false
-                    LDBus.sendSpecial2(
-                        EVENT_TO_APP_KEY,
-                        EVENT_CONNECTION_FAIL,
-                        exception
-                    )
+                    LDBus.sendSpecial2(EVENT_TO_APP, CONN_FAIL, ex)
                 }
 
-                override fun onConnectSuccess(
-                    bleDevice: BleDevice,
-                    gatt: BluetoothGatt,
-                    status: Int
-                ) {
+                override fun onConnectSuccess(bd: BleDevice, gatt: BluetoothGatt, status: Int) {
                     conn = true
                     currGatt = gatt
-                    LDBus.sendSpecial2(EVENT_TO_APP_KEY, EVENT_CONNECTION_SUCCESS, gatt)
+                    LDBus.sendSpecial2(EVENT_TO_APP, CONN_OK, gatt)
                     val service = ParseHelper.instance.findService(gatt)
                     val character = ParseHelper.instance.findCharacteristic(service)
                     service?.run {
                         //  接收配对通知-一次建立连接之后 在notify中进行后续的数据处理
-                        notify(bleDevice,
-                            uuid.toString(),
-                            character?.uuid.toString(),
+                        notify(bd, uuid.toString(), character?.uuid.toString(),
                             object : BleNotifyCallback() {
                                 override fun onNotifySuccess() {}
                                 override fun onNotifyFailure(exception: BleException?) {}
                                 override fun onCharacteristicChanged(data: ByteArray?) {
-                                    handleNotify(data, bleDevice, character)
+                                    handleNotify(data, bd, character)
                                 }
                             }
                         )
 
                         if (!isPaired) {  //  已经配对过了 不需要再次校验data
-                            write(bleDevice, uuid.toString(), character?.uuid.toString(), checkData)
+                            write(bd, uuid.toString(), character?.uuid.toString(), checkData)
                         }
                     }
                 }
 
                 override fun onDisConnected(
-                    isActiveDisConnected: Boolean,
-                    bleDevice: BleDevice,
+                    disC: Boolean,
+                    bd: BleDevice,
                     gatt: BluetoothGatt,
                     status: Int
                 ) {
                     conn = false
                     Log.e(TAG, "当前设备已断开连接")
                     scanDevices()
-                    LDBus.sendSpecial2(EVENT_TO_APP_KEY, EVENT_DIS_CONNECTION, gatt)
+                    LDBus.sendSpecial2(EVENT_TO_APP, DIS_CONN, gatt)
                 }
             })
         } else {
@@ -261,8 +228,8 @@ class PadSdkHelper private constructor() {
                                 || startsWith(DOUBLE_CLICK_DIS_CONN7) -> {
                             if (!FastSendIntercept.doubleSendIntercept()) {
                                 LDBus.sendSpecial2(
-                                    EVENT_TO_APP_KEY,
-                                    EVENT_TYPE_DOUBLE_CLICK,
+                                    EVENT_TO_APP,
+                                    DOUBLE_CLICK,
                                     bleDevice
                                 )
                                 Log.e(TAG, "有效事件---->已连接时候——双击的广播-1")
@@ -298,12 +265,15 @@ class PadSdkHelper private constructor() {
                     result = result.substring(4)
                     when {
                         result.startsWith(RESULT_DATA_FAIL) -> {
+                            LDBus.sendSpecial2(EVENT_TO_APP, PAIR_FAIL, bleDevice)
                             Log.e(TAG, "配对错误")
                         }
                         result.startsWith(RESULT_DATA_OK) -> {
+                            LDBus.sendSpecial2(EVENT_TO_APP, PAIR_OK, bleDevice)
                             Log.e(TAG, "配对成功")
                         }
                         result.startsWith(RESULT_DATA_TIME_OUT) -> {
+                            LDBus.sendSpecial2(EVENT_TO_APP, PAIR_TIME_OUT, bleDevice)
                             write(
                                 bleDevice,
                                 uuid.toString(),
@@ -356,7 +326,7 @@ class PadSdkHelper private constructor() {
                 result.startsWith(RESULT_DATA_TYPE_CLICK) -> {
                     //  返回了单击的事件
                     Log.e(TAG, "设备触发了单击的事件")
-                    LDBus.sendSpecial2(EVENT_TO_APP_KEY, EVENT_TYPE_CLICK, bleDevice)
+                    LDBus.sendSpecial2(EVENT_TO_APP, CLICK, bleDevice)
                     write(
                         bleDevice,
                         uuid.toString(),
@@ -395,27 +365,18 @@ class PadSdkHelper private constructor() {
      *  在不扩大MTU和扩大MTU的无效性的情况下，发送超过20字节的长数据时需要分包。该参数boolean split表示是否使用报文传递；
      *  write不带boolean split参数的方法默认将数据分包20多个字节。
      *  在onWriteSuccess回调方法上：current表示当前发送的包数，total表示本次的总包数据，justWrite表示刚刚发送成功的包。
-     * @param bleDevice
-     * @param uuid_service
-     * @param uuid_write
-     * @param data
      */
-    fun write(
-        bleDevice: BleDevice?, uuid_service: String?, uuid_write: String?, data: ByteArray?
-    ) {
+    fun write(bd: BleDevice, uuidS: String, uuidW: String, d: ByteArray) {
         PadSdkGlobalHandler.ins().mHandler.get()?.postDelayed({
-            BleManager.getInstance().write(
-                bleDevice!!,
-                uuid_service!!,
-                uuid_write!!,
-                data,
-                true,
-                object : BleWriteCallback() {
+            BleManager.getInstance()
+                .write(bd, uuidS, uuidW, d, true, object : BleWriteCallback() {
                     override fun onWriteSuccess(current: Int, total: Int, justWrite: ByteArray?) {
+                        LDBus.sendSpecial2(EVENT_TO_APP, WRITE_OK, "")
                         Log.e(TAG, "写入数据到设备成功")
                     }
 
                     override fun onWriteFailure(exception: BleException?) {
+                        LDBus.sendSpecial2(EVENT_TO_APP, WRITE_FAIL, "")
                         Log.e(TAG, "写入数据到设备失败")
                     }
                 })
@@ -423,42 +384,15 @@ class PadSdkHelper private constructor() {
     }
 
     /**
-     * read 传输中间的内容
-     *
-     * @param bleDevice
-     * @param uuid_service
-     * @param uuid_read
+     * 打开 or 关闭蓝牙
      */
-    fun read(
-        bleDevice: BleDevice?,
-        uuid_service: String?,
-        uuid_read: String?,
-    ) {
-        BleManager.getInstance()
-            .read(bleDevice, uuid_service, uuid_read, object : BleReadCallback() {
-                override fun onReadSuccess(data: ByteArray?) {
-                }
-
-                override fun onReadFailure(exception: BleException?) {
-                }
-            })
-    }
-
-    /**
-     * 打开蓝牙
-     */
-    fun onBlueTooth() {
+    fun onOrOffBlueTooth(open: Boolean) {
         if (checkBlueToothEnable()) {
-            BleManager.getInstance().enableBluetooth()
-        }
-    }
-
-    /**
-     * 关闭蓝牙
-     */
-    fun offBlueTooth() {
-        if (checkBlueToothEnable()) {
-            BleManager.getInstance().disableBluetooth()
+            if (open) {
+                BleManager.getInstance().enableBluetooth()
+            } else {
+                BleManager.getInstance().disableBluetooth()
+            }
         }
     }
 
@@ -485,23 +419,12 @@ class PadSdkHelper private constructor() {
 
 
     @JvmOverloads
-    private fun notify(
-        bleDevice: BleDevice,
-        uuid_service: String,
-        uuid_notify: String,
-        callback: BleNotifyCallback
-    ) {
-        BleManager.getInstance().notify(
-            bleDevice, uuid_service, uuid_notify, callback
-        )
+    private fun notify(bd: BleDevice, uuidS: String, uuidN: String, callback: BleNotifyCallback) {
+        BleManager.getInstance().notify(bd, uuidS, uuidN, callback)
     }
 
-    fun stopNotify(
-        bleDevice: BleDevice,
-        uuid_service: String,
-        uuid_notify: String
-    ) {
-        BleManager.getInstance().stopNotify(bleDevice, uuid_service, uuid_notify, true)
+    fun stopNotify(bd: BleDevice, uuidS: String, uuidN: String) {
+        BleManager.getInstance().stopNotify(bd, uuidS, uuidN)
     }
 
     /**
@@ -513,7 +436,7 @@ class PadSdkHelper private constructor() {
         val resultData = ParseHelper.instance.setFlashInfo(count, intervalTime)
         currGatt?.let { gatt ->
             val service = ParseHelper.instance.findService(gatt)
-            service?.let {service ->
+            service?.let { service ->
                 val character = ParseHelper.instance.findCharacteristic(service)
                 character?.let {
                     write(
@@ -531,6 +454,7 @@ class PadSdkHelper private constructor() {
      * 释放资源
      */
     fun release() {
+        BleManager.getInstance().cancelScan()
         disconnectAllDevice()
         BleManager.getInstance().destroy()
     }
