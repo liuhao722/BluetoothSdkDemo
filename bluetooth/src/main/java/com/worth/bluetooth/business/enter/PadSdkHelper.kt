@@ -82,10 +82,9 @@ class PadSdkHelper private constructor() {
     }
 
     /**
-     * 连接设备
+     * 连接设备-检查设备连接,用户手动点击某个wifi进行连接
      */
     fun connect(bleDevice: BleDevice) {
-        //  检查设备连接,用户手动点击某个wifi进行连接
         val result = ParseHelper.instance.parseRecord(bleDevice.scanRecord)
         result?.run {
             when {
