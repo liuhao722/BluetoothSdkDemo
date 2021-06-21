@@ -19,7 +19,7 @@
     <TextView
         android:id="@+id/tv_result_list"
         android:layout_width="match_parent"
-        android:layout_height="364dp"
+        android:layout_height="264dp"
         android:layout_marginLeft="24dp"
         android:layout_marginTop="4dp"
         android:layout_marginRight="24dp"

@@ -40,7 +40,6 @@ public class LogHelper {
                 sb.append("蓝牙名称:\t" + item.getName())
                         .append("\tmac地址:\t" + item.getMac())
                         .append("\trssi信号:\t" + item.getRssi())
-                        .append("\tkey:\t" + item.getKey())
                         .append("\tdevices:\t" + item.getDevice().toString())
                         .append("\tscanRecord:\t" + item.getScanRecord().toString())
                         .append("\n");
