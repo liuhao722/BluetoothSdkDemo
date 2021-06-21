@@ -38,10 +38,10 @@ class ParseHelper private constructor() {
 
         val result = HexUtil.formatHexString(temp) //  状态信息
 
-//        Log.e("info", "状态信息:${result.substring(0, 4)}")
+        Log.e("解析到广播有效内容部分", "状态信息:${result.substring(0, 4)}")
 //        Log.e("info", "产品id:${result.substring(4, 8)}")
 //        Log.e("info", "mac地址:${result.substring(8, 20)}")
-//        Log.e("info", result)
+//        Log.e("解析到广播有效内容部分：", result)
         return result
 
     }

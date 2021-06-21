@@ -38,6 +38,8 @@ class PadSdkHelper private constructor() {
     private var scanResultListTemp: MutableList<BleDevice> = mutableListOf()
     private var mScanTimeOut: Long = 3456L
 
+    private var conn = false;
+
     /**
      * 初始化sdk
      * @param reConnectCount            重连次数
@@ -114,7 +116,10 @@ class PadSdkHelper private constructor() {
                     mutableListOf<BleDevice>()
                 )
             }
-            scanDevices()
+
+            if (!conn) {
+                scanDevices()
+            }
         }
     }
 
@@ -166,6 +171,7 @@ class PadSdkHelper private constructor() {
         if (!BleManager.getInstance().isConnected(bleDevice)) {
             BleManager.getInstance().connect(bleDevice, object : BleGattCallback() {
                 override fun onStartConnect() {
+                    conn = false
                     LDBus.sendSpecial2(
                         EVENT_TO_APP_KEY,
                         EVENT_START_CONNECTION,
@@ -177,6 +183,7 @@ class PadSdkHelper private constructor() {
                     bleDevice: BleDevice,
                     exception: BleException
                 ) {
+                    conn = false
                     LDBus.sendSpecial2(
                         EVENT_TO_APP_KEY,
                         EVENT_CONNECTION_FAIL,
@@ -189,6 +196,7 @@ class PadSdkHelper private constructor() {
                     gatt: BluetoothGatt,
                     status: Int
                 ) {
+                    conn = true
                     LDBus.sendSpecial2(EVENT_TO_APP_KEY, EVENT_CONNECTION_SUCCESS, gatt)
                     ParseHelper.instance.findService(gatt)
                     val service = ParseHelper.instance.findService(gatt)
@@ -208,12 +216,7 @@ class PadSdkHelper private constructor() {
                         )
 
                         if (!isPaired) {  //  已经配对过了 不需要再次校验data
-                            write(
-                                bleDevice,
-                                uuid.toString(),
-                                character?.uuid.toString(),
-                                checkData
-                            )
+                            write(bleDevice, uuid.toString(), character?.uuid.toString(), checkData)
                         }
                     }
                 }
@@ -224,6 +227,7 @@ class PadSdkHelper private constructor() {
                     gatt: BluetoothGatt,
                     status: Int
                 ) {
+                    conn = false
                     Log.e(TAG, "当前设备已断开连接")
                     scanDevices()
                     LDBus.sendSpecial2(EVENT_TO_APP_KEY, EVENT_DIS_CONNECTION, gatt)
@@ -245,10 +249,10 @@ class PadSdkHelper private constructor() {
                     when {
                         startsWith(AFTER_PAIRED) -> {
                             connectionAndNotify(bleDevice, true)
-                            Log.e(TAG, AFTER_PAIRED + "配对成功后的广播")
+                            Log.e(TAG, "配对成功，扫描到该设备的广播，目前进行直接连接处理")
                         }
                         startsWith(LONG_PRESS) -> {
-                            Log.e(TAG, LONG_PRESS + "长按的广播")
+                            Log.e(TAG, "长按10秒配对的广播")
                             connectionAndNotify(bleDevice, false)
                         }
                         startsWith(DOUBLE_CLICK_CONN4)
@@ -260,9 +264,10 @@ class PadSdkHelper private constructor() {
                                     EVENT_TYPE_DOUBLE_CLICK,
                                     bleDevice
                                 )
-                                Log.e(TAG, DOUBLE_CLICK_CONN4 + "已连接时候——双击的广播-1")
+                                Log.e(TAG, "有效事件---->已连接时候——双击的广播-1")
+                            } else {
+                                Log.e(TAG, "20秒内收到重复双击广播信号，只处理一次服务请求")
                             }
-                            Log.e(TAG, DOUBLE_CLICK_CONN4 + "已连接时候——双击的广播-2")
                         }
                         else -> {
                             Log.e(TAG, "未配对过，需要手动点击配对--app端拿到list之后进行操作")
