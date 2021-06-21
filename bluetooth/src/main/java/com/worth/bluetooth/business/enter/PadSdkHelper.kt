@@ -36,6 +36,7 @@ class PadSdkHelper private constructor() {
     private val isAutoConnect: Boolean = false  //  是否自动重连
     private val context = application
     private var scanResultListTemp: MutableList<BleDevice> = mutableListOf()
+    private var mScanTimeOut: Long = 3456L
 
     /**
      * 初始化sdk
@@ -49,6 +50,7 @@ class PadSdkHelper private constructor() {
         reConnectCountInterval: Long = 5000,
         connectOverTime: Long = 20000
     ): PadSdkHelper {
+//        PadSdkExt.instance.register(context)
         BleManager.getInstance().init(context)
         BleManager.getInstance()
             .enableLog(true)
@@ -82,33 +84,38 @@ class PadSdkHelper private constructor() {
         scanTimeOut: Long = 5000,
         vararg bluetoothName: String = arrayOf("proximity", "iMEMBER")
     ) {
-        initScanRule(scanTimeOut, *bluetoothName)
-        BleManager.getInstance().scan(object : BleScanCallback() {
-            override fun onScanStarted(success: Boolean) {
-                LDBus.sendSpecial2(EVENT_TO_APP_KEY, EVENT_START_SCAN, "")
-            }
+        if (mScanTimeOut != scanTimeOut) {
+            mScanTimeOut = scanTimeOut
+            initScanRule(scanTimeOut, *bluetoothName)
+        }
+        BleManager.getInstance().scan(bleScanCallback)
+    }
 
-            override fun onScanning(bleDevice: BleDevice?) {
-                bleDevice?.run {
-                    LDBus.sendSpecial2(EVENT_TO_APP_KEY, EVENT_SCANNING, this)
-                }
-            }
+    private val bleScanCallback = object : BleScanCallback() {
+        override fun onScanStarted(success: Boolean) {
+            LDBus.sendSpecial2(EVENT_TO_APP_KEY, EVENT_START_SCAN, "")
+        }
 
-            override fun onScanFinished(scanResultList: MutableList<BleDevice>?) {
-                scanResultList?.run {
-                    checkDeviceList(this)
-                    if (scanResultListTemp.isNotEmpty() && scanResultListTemp == scanResultList) return
-                    LDBus.sendSpecial2(EVENT_TO_APP_KEY, EVENT_SCAN_FINISH, this)
-                } ?: run {
-                    LDBus.sendSpecial2(
-                        EVENT_TO_APP_KEY,
-                        EVENT_SCAN_FINISH,
-                        mutableListOf<BleDevice>()
-                    )
-                }
-                scanDevices()
+        override fun onScanning(bleDevice: BleDevice?) {
+            bleDevice?.run {
+                LDBus.sendSpecial2(EVENT_TO_APP_KEY, EVENT_SCANNING, this)
             }
-        })
+        }
+
+        override fun onScanFinished(scanResultList: MutableList<BleDevice>?) {
+            scanResultList?.run {
+                checkDeviceList(this)
+                if (scanResultListTemp.isNotEmpty() && scanResultListTemp == scanResultList) return
+                LDBus.sendSpecial2(EVENT_TO_APP_KEY, EVENT_SCAN_FINISH, this)
+            } ?: run {
+                LDBus.sendSpecial2(
+                    EVENT_TO_APP_KEY,
+                    EVENT_SCAN_FINISH,
+                    mutableListOf<BleDevice>()
+                )
+            }
+            scanDevices()
+        }
     }
 
     /**
@@ -217,6 +224,7 @@ class PadSdkHelper private constructor() {
                     gatt: BluetoothGatt,
                     status: Int
                 ) {
+                    Log.e(TAG, "当前设备已断开连接")
                     scanDevices()
                     LDBus.sendSpecial2(EVENT_TO_APP_KEY, EVENT_DIS_CONNECTION, gatt)
                 }
@@ -398,11 +406,11 @@ class PadSdkHelper private constructor() {
                 true,
                 object : BleWriteCallback() {
                     override fun onWriteSuccess(current: Int, total: Int, justWrite: ByteArray?) {
-                        Log.e(TAG, "onWriteSuccess")
+                        Log.e(TAG, "写入数据到设备成功")
                     }
 
                     override fun onWriteFailure(exception: BleException?) {
-                        Log.e(TAG, "onWriteFailure")
+                        Log.e(TAG, "写入数据到设备失败")
                     }
                 })
         }, 500)

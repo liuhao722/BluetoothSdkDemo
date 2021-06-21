@@ -8,7 +8,7 @@ package com.worth.bluetooth.business.utils
  */
 object FastSendIntercept {
     var lastTime: Long = 0
-    private const val intervalTime = 8000L //  间隔
+    private const val intervalTime = 20000L //  间隔
 
     /**
      * 双击拦截

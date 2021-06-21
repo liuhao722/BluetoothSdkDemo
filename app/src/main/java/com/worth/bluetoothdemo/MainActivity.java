@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -14,7 +13,6 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.clj.fastble.data.BleDevice;
-import com.clj.fastble.utils.HexUtil;
 import com.worth.bluetooth.business.enter.PadSdkHelper;
 import com.worth.framework.base.core.utils.LDBus;
 
@@ -101,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.btn_search).setOnClickListener(v -> {
             checkPermissions();
             if (checkGPSIsOpen()) {
-                padSdkHelper.scanDevices(5000, "proximity", "iMEMBER");
+                padSdkHelper.scanDevices(5000);
             }
         });
 
