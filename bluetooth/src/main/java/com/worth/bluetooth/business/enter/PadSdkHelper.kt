@@ -91,13 +91,8 @@ class PadSdkHelper private constructor() {
                 startsWith(AFTER_PAIRED) -> {
                     connectionAndNotify(bleDevice, true)
                 }
-
-                startsWith(UNPAIRED) || startsWith(LONG_PRESS) -> {
-                    connectionAndNotify(bleDevice, false)
-                }
-
                 else -> {
-                    Log.e(TAG, "checkDevice--其他广播")
+                    connectionAndNotify(bleDevice, false)
                 }
             }
         }
@@ -354,7 +349,7 @@ class PadSdkHelper private constructor() {
                 when {
                     startsWith(AFTER_PAIRED) -> {
 //                            connectionAndNotify(bleDevice, true)                                  //  应要求关闭
-                        Log.e(TAG, "配对成功，扫描到该设备的广播，目前进行直接连接处理")
+                        Log.e(TAG, "配对成功后设备发送的广播-应要求已关闭")
                         find = true
                     }
                     startsWith(LONG_PRESS) -> {
@@ -365,7 +360,7 @@ class PadSdkHelper private constructor() {
                     startsWith(DOUBLE_CLICK_CONN4)
                             || startsWith(DOUBLE_CLICK_DIS_CONN5)
                             || startsWith(DOUBLE_CLICK_DIS_CONN7) -> {
-                        if (!FastSendIntercept.doubleSendIntercept()) {
+                        if (!FastSendIntercept.doubleSend()) {
                             LDBus.sendSpecial2(EVENT_TO_APP, DOUBLE_CLICK, device)
                             Log.e(TAG, "有效事件---->已连接时候——双击的广播")
                         } else {
@@ -374,7 +369,7 @@ class PadSdkHelper private constructor() {
                         find = false
                     }
                     else -> {
-                        Log.e(TAG, "未配对过，需要手动点击配对--app端拿到list之后进行操作")
+                        Log.e(TAG, "未配对过，需要用户长按进行配对后，才能扫描到")
                         find = false
                     }
                 }

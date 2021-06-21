@@ -23,6 +23,9 @@ import java.util.List;
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.CONN_FAIL;
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.CONN_OK;
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.DIS_CONN;
+import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.PAIR_FAIL;
+import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.PAIR_OK;
+import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.PAIR_TIME_OUT;
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.SCANNING;
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.SCAN_FINISH;
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.START_CONN;
@@ -30,6 +33,8 @@ import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.START_SCA
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.EVENT_TO_APP;
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.CLICK;
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.DOUBLE_CLICK;
+import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.WRITE_FAIL;
+import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.WRITE_OK;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -53,21 +58,40 @@ public class MainActivity extends AppCompatActivity {
         padSdkHelper = PadSdkHelper.Companion.getInstance().initPadSdk();
     }
 
-
+    /**
+     * const val START_SCAN = 0x20_000_001                                                          //  开始扫描
+     * const val SCANNING = 0x20_000_002                                                            //  扫描中
+     * const val SCAN_FINISH = 0x20_000_003                                                         //  扫描结束
+     *
+     * const val START_CONN = 0x20_000_010                                                          //  扫描结束后-开始连接某个设备
+     * const val CONN_FAIL = 0x20_000_011                                                           //  扫描结束后-连接设备失败
+     * const val CONN_OK = 0x20_000_012                                                             //  扫描结束后-连接设备成功
+     * const val DIS_CONN = 0x20_000_013                                                            //  扫描结束后-在链接成功某个设备后，断开和某个设备的链接
+     *
+     * const val WRITE_OK = 0x20_000_020                                                            //  写入数据到设备成功
+     * const val WRITE_FAIL = 0x20_000_021                                                          //  写入数据到设备失败
+     *
+     * const val PAIR_OK = 0x20_000_031                                                             //  配对成功
+     * const val PAIR_FAIL = 0x20_000_032                                                           //  配对失败
+     * const val PAIR_TIME_OUT = 0x20_000_033                                                       //  配对超时
+     *
+     * const val CLICK = 0x20_000_301                                                               //  单击
+     * const val DOUBLE_CLICK = 0x20_000_302                                                        //  双击
+     */
     private void initObserver() {
         LDBus.INSTANCE.observer2(EVENT_TO_APP, (eventKey, objectParams) -> {
             int key;
             if (eventKey != null && (key = (int) eventKey) > 0) {
                 switch (key) {
-                    case START_SCAN:                                                          //  开始扫描-做上次扫描数据清理工作
+                    case START_SCAN:                                                                //  开始扫描-做上次扫描数据清理工作
                         // 可做loading弹窗
                         break;
-                    case SCANNING:                                                            //  扫描中-可添加到自定义的list中 每次扫描到就展示到自定义的adapter中
+                    case SCANNING:                                                                  //  扫描中-可添加到自定义的list中 每次扫描到就展示到自定义的adapter中
                         if (objectParams != null && objectParams instanceof BleDevice) {
                             mBleDevice = (BleDevice) objectParams;
                         }
                         break;
-                    case SCAN_FINISH:                                                         //  扫描结束-数据列表展示
+                    case SCAN_FINISH:                                                               //  扫描结束-数据列表展示
                         //  可做dismiss 结束loading弹窗
                         if (objectParams != null) {
                             mScanResultList = (List<BleDevice>) objectParams;
@@ -75,23 +99,36 @@ public class MainActivity extends AppCompatActivity {
                         }
                         break;
 
-                    case START_CONN:                                                    //  扫描结束后-开始连接某个设备
-                        // 可做连接的loading弹窗
+                    case START_CONN:                                                                //  扫描结束后-开始连接某个设备
+                        // 可做扫描连接的loading弹窗，但未连接情况下 是一直循环在扫描 却也不合适！
                         break;
-                    case CONN_FAIL:                                                     //  扫描结束后-连接设备失败
+                    case CONN_FAIL:                                                                 //  扫描结束后-连接设备失败
                         // 可做连接失败提示，并结束连接的loading弹窗
                         break;
-                    case CONN_OK:                                                  //  扫描结束后-连接设备成功
+                    case CONN_OK:                                                                   //  扫描结束后-连接设备成功
                         // 可做连接成功提示，并结束连接的loading弹窗
                         break;
-                    case DIS_CONN:                                                      //  扫描结束后-在链接成功某个设备后，断开和某个设备的链接
+                    case DIS_CONN:                                                                  //  扫描结束后-在链接成功某个设备后，断开和某个设备的链接
                         // 可做断开连接提示
                         break;
 
-                    case CLICK:
+                    case CLICK:                                                                     //  会员卡单击事件回调
                         break;
-                    case DOUBLE_CLICK:
+                    case DOUBLE_CLICK:                                                              //  会员卡双击事件回调
                         break;
+
+                    case WRITE_OK:                                                                  //  写入成功
+                        break;
+                    case WRITE_FAIL:                                                                //  写入失败
+                        break;
+
+                    case PAIR_OK:                                                                   //  配对成功
+                        break;
+                    case PAIR_FAIL:                                                                 //  配对失败
+                        break;
+                    case PAIR_TIME_OUT:                                                             //  配对超市
+                        break;
+
                 }
             }
             return null;

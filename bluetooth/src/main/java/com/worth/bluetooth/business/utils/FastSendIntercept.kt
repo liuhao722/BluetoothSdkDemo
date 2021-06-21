@@ -11,9 +11,9 @@ object FastSendIntercept {
     private const val intervalTime = 20000L //  间隔
 
     /**
-     * 双击拦截
+     * 快速发送双击会员卡事件的拦截
      */
-    fun doubleSendIntercept(): Boolean {
+    fun doubleSend(): Boolean {
         val curr = System.currentTimeMillis()
         if (curr - lastTime > intervalTime) {
             lastTime = curr
