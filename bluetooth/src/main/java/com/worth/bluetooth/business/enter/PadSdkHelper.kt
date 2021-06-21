@@ -35,7 +35,7 @@ class PadSdkHelper private constructor() {
     private val TAG = "PadSdkHelper"
     private val isAutoConnect: Boolean = false  //  是否自动重连
     private val context = application
-    private var scanResultListTemp: MutableList<BleDevice> = mutableListOf()
+    private var scanResultListTemp: List<BleDevice> = arrayListOf()
     private var mScanTimeOut: Long = 3456L
 
     private var conn = false
@@ -106,9 +106,10 @@ class PadSdkHelper private constructor() {
 
         override fun onScanFinished(scanResultList: MutableList<BleDevice>?) {
             scanResultList?.run {
-                checkDeviceList(this)
+                val result = checkDeviceList(this)
                 if (scanResultListTemp.isNotEmpty() && scanResultListTemp == scanResultList) return
-                LDBus.sendSpecial2(EVENT_TO_APP, SCAN_FINISH, this)
+                scanResultListTemp = result
+                LDBus.sendSpecial2(EVENT_TO_APP, SCAN_FINISH, result)
             } ?: run {
                 LDBus.sendSpecial2(
                     EVENT_TO_APP,
