@@ -155,63 +155,56 @@ class PadSdkHelper private constructor() {
      * @param isPaired 已经成功配对过了
      */
     private fun connectionAndNotify(bd: BleDevice, isPaired: Boolean) {
-        if (!BleManager.getInstance().isConnected(bd)) {
-            BleManager.getInstance().connect(bd, object : BleGattCallback() {
-                override fun onStartConnect() {
-                    conn = false
-                    LDBus.sendSpecial2(EVENT_TO_APP, START_CONN, bd)
-                }
+        if (BleManager.getInstance().isConnected(bd)) return
+        BleManager.getInstance().connect(bd, object : BleGattCallback() {
+            override fun onStartConnect() {
+                conn = false
+                LDBus.sendSpecial2(EVENT_TO_APP, START_CONN, bd)
+            }
 
-                override fun onConnectFail(bd: BleDevice, ex: BleException) {
-                    conn = false
-                    LDBus.sendSpecial2(EVENT_TO_APP, CONN_FAIL, ex)
-                }
+            override fun onConnectFail(bd: BleDevice, ex: BleException) {
+                conn = false
+                LDBus.sendSpecial2(EVENT_TO_APP, CONN_FAIL, ex)
+            }
 
-                override fun onConnectSuccess(bd: BleDevice, gatt: BluetoothGatt, status: Int) {
-                    conn = true
-                    currGatt = gatt
-                    LDBus.sendSpecial2(EVENT_TO_APP, CONN_OK, gatt)
-                    val service = ParseHelper.instance.findService(gatt)
-                    val character = ParseHelper.instance.findCharacteristic(service)
-                    service?.run {
-                        //  接收配对通知-一次建立连接之后 在notify中进行后续的数据处理
-                        notify(bd, uuid.toString(), character?.uuid.toString(),
-                            object : BleNotifyCallback() {
-                                override fun onNotifySuccess() {}
-                                override fun onNotifyFailure(exception: BleException?) {}
-                                override fun onCharacteristicChanged(data: ByteArray?) {
-                                    handleNotify(data, bd, character)
-                                }
+            override fun onConnectSuccess(bd: BleDevice, gatt: BluetoothGatt, status: Int) {
+                conn = true
+                currGatt = gatt
+                LDBus.sendSpecial2(EVENT_TO_APP, CONN_OK, gatt)
+                val service = ParseHelper.instance.findService(gatt)
+                val character = ParseHelper.instance.findCharacteristic(service)
+                service?.run {
+                    //  接收配对通知-一次建立连接之后 在notify中进行后续的数据处理
+                    notify(bd, uuid.toString(), character?.uuid.toString(),
+                        object : BleNotifyCallback() {
+                            override fun onNotifySuccess() {}
+                            override fun onNotifyFailure(exception: BleException?) {}
+                            override fun onCharacteristicChanged(data: ByteArray?) {
+                                handleNotify(data, bd, character)
                             }
-                        )
-
-                        if (!isPaired) {  //  已经配对过了 不需要再次校验data
-                            character?.uuid?.let { write(bd, uuid, it, checkData) }
                         }
+                    )
+
+                    if (!isPaired) {  //  已经配对过了 不需要再次校验data
+                        character?.uuid?.let { write(bd, uuid, it, checkData) }
                     }
                 }
+            }
 
-                override fun onDisConnected(
-                    disC: Boolean,
-                    bd: BleDevice,
-                    gatt: BluetoothGatt,
-                    status: Int
-                ) {
-                    conn = false
-                    Log.e(TAG, "当前设备已断开连接")
-                    scanDevices()
-                    LDBus.sendSpecial2(EVENT_TO_APP, DIS_CONN, gatt)
-                }
-            })
-        } else {
-            Log.e(TAG, "当前设备已连接-不进行逻辑处理")
-        }
+            override fun onDisConnected(disC: Boolean, b: BleDevice, g: BluetoothGatt, s: Int) {
+                conn = false
+                Log.e(TAG, "当前设备已断开连接")
+                scanDevices()
+                LDBus.sendSpecial2(EVENT_TO_APP, DIS_CONN, g)
+            }
+        })
     }
+
     /**
      * 扫描结果发现是长按的事件且未连接该设备
      */
-    private fun checkDeviceList(devices: List<BleDevice>) :List<BleDevice>{
-        return devices?.filter {device ->
+    private fun checkDeviceList(devices: List<BleDevice>): List<BleDevice> {
+        return devices?.filter { device ->
             var find = false
             val result = ParseHelper.instance.parseRecord(device.scanRecord)
             result?.run {
@@ -243,44 +236,9 @@ class PadSdkHelper private constructor() {
                     }
                 }
             }
-             find
+            find
         }
     }
-//    /**
-//     * 扫描结果发现是长按的事件且未连接该设备-临时决定不要该方法，暂时注销掉
-//     */
-//    private fun checkDeviceList(devices: List<BleDevice>) {
-//        devices?.forEach { bleDevice ->
-//            if (!BleManager.getInstance().isConnected(bleDevice)) {
-//                val result = ParseHelper.instance.parseRecord(bleDevice.scanRecord)
-//                result?.run {
-//                    when {
-//                        startsWith(AFTER_PAIRED) -> {
-////                            connectionAndNotify(bleDevice, true)                                  //  应要求关闭
-//                            Log.e(TAG, "配对成功，扫描到该设备的广播，目前进行直接连接处理")
-//                        }
-//                        startsWith(LONG_PRESS) -> {
-//                            Log.e(TAG, "长按10秒配对的广播")
-////                            connectionAndNotify(bleDevice, false)                                 //  执行配对流程--关闭，扫描时候如果是未配对的状态下，不进行数据的返回
-//                        }
-//                        startsWith(DOUBLE_CLICK_CONN4)
-//                                || startsWith(DOUBLE_CLICK_DIS_CONN5)
-//                                || startsWith(DOUBLE_CLICK_DIS_CONN7) -> {
-//                            if (!FastSendIntercept.doubleSendIntercept()) {
-//                                LDBus.sendSpecial2(EVENT_TO_APP, DOUBLE_CLICK, bleDevice)
-//                                Log.e(TAG, "有效事件---->已连接时候——双击的广播-1")
-//                            } else {
-//                                Log.e(TAG, "20秒内收到重复双击广播信号，只处理一次服务请求")
-//                            }
-//                        }
-//                        else -> {
-//                            Log.e(TAG, "未配对过，需要手动点击配对--app端拿到list之后进行操作")
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
 
     /**
      * 处理notify的结果
