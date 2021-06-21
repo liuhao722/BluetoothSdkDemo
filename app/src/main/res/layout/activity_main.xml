@@ -14,16 +14,16 @@
         android:layout_marginTop="64dp"
         android:layout_marginRight="24dp"
         android:text="搜索蓝牙"
-        android:textSize="16sp" />
+        android:textSize="14sp" />
 
     <TextView
         android:id="@+id/tv_result_list"
         android:layout_width="match_parent"
-        android:layout_height="264dp"
+        android:layout_height="96dp"
         android:layout_marginLeft="24dp"
         android:layout_marginTop="4dp"
         android:layout_marginRight="24dp"
-        android:textSize="10sp"
+        android:textSize="8sp"
         tools:text="搜索到的蓝牙列表" />
 
     <Button
@@ -34,7 +34,7 @@
         android:layout_marginTop="24dp"
         android:layout_marginRight="24dp"
         android:text="连接蓝牙\n(连接最近扫描到的一个符合条件的)"
-        android:textSize="16sp" />
+        android:textSize="14sp" />
 
     <Button
         android:id="@+id/btn_dis_conn"
@@ -44,7 +44,7 @@
         android:layout_marginTop="24dp"
         android:layout_marginRight="24dp"
         android:text="断开蓝牙\n(断开最近扫描到的一个符合条件的)"
-        android:textSize="16sp" />
+        android:textSize="14sp" />
 
     <Button
         android:id="@+id/btn_all_devices"
@@ -54,5 +54,5 @@
         android:layout_marginTop="24dp"
         android:layout_marginRight="24dp"
         android:text="获取所有蓝牙设备 并 打印到studio"
-        android:textSize="16sp" />
+        android:textSize="14sp" />
 </LinearLayout>

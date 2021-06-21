@@ -18,31 +18,15 @@ import java.util.Set;
 public class LogHelper {
     private static final String TAG = "LogHelper";
 
-    public static void logPrint(Set<BluetoothDevice> devices) {
-        StringBuilder sb = new StringBuilder();
-        while (devices.iterator().hasNext()) {
-            BluetoothDevice item = devices.iterator().next();
-            sb.append("蓝牙设备信息:\t" + item.getName())
-                    .append("\tgetName:\t" + item.getName())
-                    .append("\tgetAddress:\t" + item.getAddress())
-                    .append("\tgetBondState:\t" + item.getBondState())
-                    .append("\tscanRecord:\t" + item.getUuids().toString())
-                    .append("\tscanRecord:\t" + item.getBluetoothClass().toString())
-                    .append("\n");
-        }
-        L.e(TAG, sb.toString());
-    }
-
     public static String printAndShowScanResult(List<BleDevice> list) {
         if (!list.isEmpty()) {
             StringBuilder sb = new StringBuilder();
             for (BleDevice item : list) {
-                sb.append("蓝牙名称:\t" + item.getName())
-                        .append("\tmac地址:\t" + item.getMac())
-                        .append("\trssi信号:\t" + item.getRssi())
-                        .append("\tdevices:\t" + item.getDevice().toString())
-                        .append("\tscanRecord:\t" + item.getScanRecord().toString())
-                        .append("\n");
+                sb.append(list.indexOf(item) + "、蓝牙名称: " + item.getName())
+                        .append("\tmac地址: " + item.getMac())
+                        .append("\t信号量:" + item.getRssi())
+//                        .append("\tBluetoothDevice: " + item.getDevice().toString())
+                ;
             }
             L.e(TAG, sb.toString());
             return sb.toString();

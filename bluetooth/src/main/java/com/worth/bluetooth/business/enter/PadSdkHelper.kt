@@ -71,7 +71,7 @@ class PadSdkHelper private constructor() {
      */
     @JvmOverloads
     fun scanDevices(
-        scanTimeOut: Long = 3000,
+        scanTimeOut: Long = 5000,
         vararg bluetoothName: String = arrayOf("proximity", "iMEMBER")
     ) {
         if (mScanTimeOut != scanTimeOut) {
