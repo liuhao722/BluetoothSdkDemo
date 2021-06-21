@@ -223,6 +223,7 @@ class PadSdkHelper private constructor() {
             }
 
             override fun onConnectSuccess(bd: BleDevice, gatt: BluetoothGatt, status: Int) {
+                cancelScan()                                                                        //  链接一台设备后，停止扫描；
                 conn = true
                 currGatt = gatt
                 LDBus.sendSpecial2(EVENT_TO_APP, CONN_OK, gatt)
