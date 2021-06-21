@@ -8,7 +8,10 @@ import android.content.Intent
 import android.provider.Settings
 import android.util.Log
 import com.clj.fastble.BleManager
-import com.clj.fastble.callback.*
+import com.clj.fastble.callback.BleGattCallback
+import com.clj.fastble.callback.BleNotifyCallback
+import com.clj.fastble.callback.BleScanCallback
+import com.clj.fastble.callback.BleWriteCallback
 import com.clj.fastble.data.BleDevice
 import com.clj.fastble.exception.BleException
 import com.clj.fastble.scan.BleScanRuleConfig
@@ -33,13 +36,12 @@ import java.util.*
  */
 class PadSdkHelper private constructor() {
     private val TAG = "PadSdkHelper"
-    private val isAutoConnect: Boolean = false  //  是否自动重连
     private val context = application
     private var scanResultListTemp: List<BleDevice> = arrayListOf()
-    private var mScanTimeOut: Long = 3456L
+    private var mScanTimeOut: Long = 3456L          //  扫描超时时间
 
-    private var conn = false
-    private var currGatt: BluetoothGatt? = null
+    private var conn = false                        //  当前的链接状态
+    private var currGatt: BluetoothGatt? = null     //  当前的蓝牙特征
 
     /**
      * 初始化sdk
@@ -63,20 +65,6 @@ class PadSdkHelper private constructor() {
     }
 
     /**
-     * 配置扫描规则
-     */
-    private fun initScanRule(scanTimeOut: Long, vararg bluetoothName: String) {
-        val scanRuleConfig = BleScanRuleConfig.Builder()
-            .setServiceUuids(null)                                              //  只扫描指定的服务的设备，可选
-            .setDeviceName(true, *bluetoothName)                         //  只扫描指定广播名的设备，可选
-            .setDeviceMac(null)                                                 //  只扫描指定mac的设备，可选
-            .setAutoConnect(isAutoConnect)                                      //  连接时的autoConnect参数，可选，默认false
-            .setScanTimeOut(scanTimeOut)                                        //  扫描超时时间，可选，默认10秒
-            .build()
-        BleManager.getInstance().initScanRule(scanRuleConfig)
-    }
-
-    /**
      * 搜索设备
      * 可以获取到蓝牙的名称和物理地址，在未连接之前，拿不到uuid。
      * @param bluetoothName 过滤蓝牙的前缀名称
@@ -93,45 +81,6 @@ class PadSdkHelper private constructor() {
         BleManager.getInstance().scan(bleScanCallback)
     }
 
-    private val bleScanCallback = object : BleScanCallback() {
-        override fun onScanStarted(success: Boolean) {
-            LDBus.sendSpecial2(EVENT_TO_APP, START_SCAN, "")
-        }
-
-        override fun onScanning(bleDevice: BleDevice?) {
-            bleDevice?.run {
-                LDBus.sendSpecial2(EVENT_TO_APP, SCANNING, this)
-            }
-        }
-
-        override fun onScanFinished(scanResultList: MutableList<BleDevice>?) {
-            scanResultList?.run {
-                val result = checkDeviceList(this)
-                if (scanResultListTemp.isNotEmpty() && scanResultListTemp == scanResultList) return
-                scanResultListTemp = result
-                LDBus.sendSpecial2(EVENT_TO_APP, SCAN_FINISH, result)
-            } ?: run {
-                LDBus.sendSpecial2(
-                    EVENT_TO_APP,
-                    SCAN_FINISH,
-                    mutableListOf<BleDevice>()
-                )
-            }
-
-            if (!conn) {
-                scanDevices()
-            }
-        }
-    }
-
-    /**
-     * 设置macId
-     */
-    internal fun setMacId(macId: String?): PadSdkHelper {
-        macId?.let { MeKV.setMacId(it) }
-        return this
-    }
-
     /**
      * 连接设备
      */
@@ -144,7 +93,7 @@ class PadSdkHelper private constructor() {
                     connectionAndNotify(bleDevice, true)
                 }
 
-                startsWith(UNPAIRED)  || startsWith(LONG_PRESS) -> {
+                startsWith(UNPAIRED) || startsWith(LONG_PRESS) -> {
                     connectionAndNotify(bleDevice, false)
                 }
 
@@ -153,6 +102,108 @@ class PadSdkHelper private constructor() {
                 }
             }
         }
+    }
+
+    /**
+     * 控制led灯闪烁
+     * @param count 要设置闪烁的次数
+     * @param intervalTime  要设置闪烁每次的时间  毫秒级 比如1000毫秒
+     */
+    fun controlLed(bd: BleDevice, count: Int = 3, intervalTime: Int = 1000) {
+        val resultData = ParseHelper.instance.setFlashInfo(count, intervalTime)
+        currGatt?.let { gatt ->
+            val service = ParseHelper.instance.findService(gatt)
+            service?.let { service ->
+                val character = ParseHelper.instance.findCharacteristic(service)
+                character?.let {
+                    write(bd, service.uuid, character?.uuid, resultData)
+                }
+            }
+        }
+    }
+
+    /**
+     *  在不扩大MTU和扩大MTU的无效性的情况下，发送超过20字节的长数据时需要分包。该参数boolean split表示是否使用报文传递；
+     *  write不带boolean split参数的方法默认将数据分包20多个字节。
+     *  在onWriteSuccess回调方法上：current表示当前发送的包数，total表示本次的总包数据，justWrite表示刚刚发送成功的包。
+     */
+    fun write(bd: BleDevice, uuidS: UUID, uuidW: UUID, data: ByteArray) {
+        PadSdkGlobalHandler.ins().mHandler.get()?.postDelayed({
+            BleManager.getInstance()
+                .write(
+                    bd,
+                    uuidS.toString(),
+                    uuidW.toString(),
+                    data,
+                    true,
+                    object : BleWriteCallback() {
+                        override fun onWriteSuccess(curr: Int, total: Int, data: ByteArray?) {
+                            LDBus.sendSpecial2(EVENT_TO_APP, WRITE_OK, "")
+                            Log.e(TAG, "写入数据到设备成功")
+                        }
+
+                        override fun onWriteFailure(exception: BleException?) {
+                            LDBus.sendSpecial2(EVENT_TO_APP, WRITE_FAIL, "")
+                            Log.e(TAG, "写入数据到设备失败")
+                        }
+                    })
+        }, 500)
+    }
+
+    /**
+     * 打开 or 关闭蓝牙
+     */
+    fun onOrOffBlueTooth(open: Boolean) {
+        if (checkBlueToothEnable()) {
+            if (open) {
+                BleManager.getInstance().enableBluetooth()
+            } else {
+                BleManager.getInstance().disableBluetooth()
+            }
+        }
+    }
+
+    /**
+     * 获取已经配对的设备
+     */
+    val connectedDevices: List<BleDevice>?
+        get() = BleManager.getInstance().allConnectedDevice
+
+    /**
+     * 取消扫描
+     * 如果调用该方法，如果还在扫描状态，则立即结束，并回调该onScanFinished方法。
+     */
+    fun cancelScan() {
+        BleManager.getInstance().cancelScan()
+    }
+
+    /**
+     * 断开连接设备
+     */
+    fun disconnect(bleDevice: BleDevice?) {
+        BleManager.getInstance().disconnect(bleDevice)
+    }
+    /**
+     * 释放资源
+     */
+    fun release() {
+        cancelScan()
+        disconnectAllDevice()
+        BleManager.getInstance().destroy()
+    }
+
+    /**
+     * 配置扫描规则
+     */
+    private fun initScanRule(scanTimeOut: Long, vararg bluetoothName: String) {
+        val scanRuleConfig = BleScanRuleConfig.Builder()
+            .setServiceUuids(null)                                              //  只扫描指定的服务的设备，可选
+            .setDeviceName(true, *bluetoothName)                         //  只扫描指定广播名的设备，可选
+            .setDeviceMac(null)                                                 //  只扫描指定mac的设备，可选
+            .setAutoConnect(false)                                              //  连接时的autoConnect参数，可选，默认false
+            .setScanTimeOut(scanTimeOut)                                        //  扫描超时时间，可选，默认10秒
+            .build()
+        BleManager.getInstance().initScanRule(scanRuleConfig)
     }
 
     /**
@@ -205,43 +256,30 @@ class PadSdkHelper private constructor() {
         })
     }
 
-    /**
-     * 扫描结果发现是长按的事件且未连接该设备
-     */
-    private fun checkDeviceList(devices: List<BleDevice>): List<BleDevice> {
-        return devices?.filter { device ->
-            var find = false
-            val result = ParseHelper.instance.parseRecord(device.scanRecord)
-            result?.run {
-                when {
-                    startsWith(AFTER_PAIRED) -> {
-//                            connectionAndNotify(bleDevice, true)                                  //  应要求关闭
-                        Log.e(TAG, "配对成功，扫描到该设备的广播，目前进行直接连接处理")
-                        find = true
-                    }
-                    startsWith(LONG_PRESS) -> {
-                        Log.e(TAG, "长按10秒配对的广播")
-//                            connectionAndNotify(bleDevice, false)                                 //  执行配对流程--关闭，扫描时候如果是未配对的状态下，不进行数据的返回
-                        find = true
-                    }
-                    startsWith(DOUBLE_CLICK_CONN4)
-                            || startsWith(DOUBLE_CLICK_DIS_CONN5)
-                            || startsWith(DOUBLE_CLICK_DIS_CONN7) -> {
-                        if (!FastSendIntercept.doubleSendIntercept()) {
-                            LDBus.sendSpecial2(EVENT_TO_APP, DOUBLE_CLICK, device)
-                            Log.e(TAG, "有效事件---->已连接时候——双击的广播")
-                        } else {
-                            Log.e(TAG, "20秒内收到重复双击广播信号，只处理一次服务请求")
-                        }
-                        find = false
-                    }
-                    else -> {
-                        Log.e(TAG, "未配对过，需要手动点击配对--app端拿到list之后进行操作")
-                        find = false
-                    }
-                }
+    private val bleScanCallback = object : BleScanCallback() {
+        override fun onScanStarted(success: Boolean) {
+            LDBus.sendSpecial2(EVENT_TO_APP, START_SCAN, "")
+        }
+
+        override fun onScanning(bleDevice: BleDevice?) {
+            bleDevice?.run {
+                LDBus.sendSpecial2(EVENT_TO_APP, SCANNING, this)
             }
-            find
+        }
+
+        override fun onScanFinished(scanResultList: MutableList<BleDevice>?) {
+            scanResultList?.run {
+                val result = checkDeviceList(this)
+                if (scanResultListTemp.isNotEmpty() && scanResultListTemp == scanResultList) return
+                scanResultListTemp = result
+                LDBus.sendSpecial2(EVENT_TO_APP, SCAN_FINISH, result)
+            } ?: run {
+                LDBus.sendSpecial2(EVENT_TO_APP, SCAN_FINISH, mutableListOf<BleDevice>())
+            }
+
+            if (!conn) {
+                scanDevices()
+            }
         }
     }
 
@@ -306,90 +344,52 @@ class PadSdkHelper private constructor() {
     }
 
     /**
-     * 取消扫描
-     * 如果调用该方法，如果还在扫描状态，则立即结束，并回调该onScanFinished方法。
+     * 扫描结果发现是长按的事件且未连接该设备
      */
-    fun cancelScan() {
-        BleManager.getInstance().cancelScan()
-    }
-
-    /**
-     * 断开连接设备
-     */
-    fun disconnect(bleDevice: BleDevice?) {
-        BleManager.getInstance().disconnect(bleDevice)
-    }
-
-    /**
-     * 断开所有已连接设备
-     */
-    private fun disconnectAllDevice() {
-        BleManager.getInstance().disconnectAllDevice()
-    }
-
-
-    /**
-     *  在不扩大MTU和扩大MTU的无效性的情况下，发送超过20字节的长数据时需要分包。该参数boolean split表示是否使用报文传递；
-     *  write不带boolean split参数的方法默认将数据分包20多个字节。
-     *  在onWriteSuccess回调方法上：current表示当前发送的包数，total表示本次的总包数据，justWrite表示刚刚发送成功的包。
-     */
-    fun write(bd: BleDevice, uuidS: UUID, uuidW: UUID, data: ByteArray) {
-        PadSdkGlobalHandler.ins().mHandler.get()?.postDelayed({
-            BleManager.getInstance()
-                .write(
-                    bd,
-                    uuidS.toString(),
-                    uuidW.toString(),
-                    data,
-                    true,
-                    object : BleWriteCallback() {
-                        override fun onWriteSuccess(curr: Int, total: Int, data: ByteArray?) {
-                            LDBus.sendSpecial2(EVENT_TO_APP, WRITE_OK, "")
-                            Log.e(TAG, "写入数据到设备成功")
+    private fun checkDeviceList(devices: List<BleDevice>): List<BleDevice> {
+        return devices?.filter { device ->
+            var find = false
+            val result = ParseHelper.instance.parseRecord(device.scanRecord)
+            result?.run {
+                when {
+                    startsWith(AFTER_PAIRED) -> {
+//                            connectionAndNotify(bleDevice, true)                                  //  应要求关闭
+                        Log.e(TAG, "配对成功，扫描到该设备的广播，目前进行直接连接处理")
+                        find = true
+                    }
+                    startsWith(LONG_PRESS) -> {
+                        Log.e(TAG, "长按10秒配对的广播")
+//                            connectionAndNotify(bleDevice, false)                                 //  执行配对流程--关闭，扫描时候如果是未配对的状态下，不进行数据的返回
+                        find = true
+                    }
+                    startsWith(DOUBLE_CLICK_CONN4)
+                            || startsWith(DOUBLE_CLICK_DIS_CONN5)
+                            || startsWith(DOUBLE_CLICK_DIS_CONN7) -> {
+                        if (!FastSendIntercept.doubleSendIntercept()) {
+                            LDBus.sendSpecial2(EVENT_TO_APP, DOUBLE_CLICK, device)
+                            Log.e(TAG, "有效事件---->已连接时候——双击的广播")
+                        } else {
+                            Log.e(TAG, "20秒内收到重复双击广播信号，只处理一次服务请求")
                         }
-
-                        override fun onWriteFailure(exception: BleException?) {
-                            LDBus.sendSpecial2(EVENT_TO_APP, WRITE_FAIL, "")
-                            Log.e(TAG, "写入数据到设备失败")
-                        }
-                    })
-        }, 500)
-    }
-
-    /**
-     * 打开 or 关闭蓝牙
-     */
-    fun onOrOffBlueTooth(open: Boolean) {
-        if (checkBlueToothEnable()) {
-            if (open) {
-                BleManager.getInstance().enableBluetooth()
-            } else {
-                BleManager.getInstance().disableBluetooth()
+                        find = false
+                    }
+                    else -> {
+                        Log.e(TAG, "未配对过，需要手动点击配对--app端拿到list之后进行操作")
+                        find = false
+                    }
+                }
             }
+            find
         }
     }
 
     /**
-     * 去设置页面打开蓝牙操作
+     * 设置macId
      */
-    fun toSettingBluetoothView(activity: Activity) {
-        if (checkBlueToothEnable()) {
-            val blueTooth = Intent(Settings.ACTION_BLUETOOTH_SETTINGS)
-            activity.startActivity(blueTooth)
-        }
+    private fun setMacId(macId: String?): PadSdkHelper {
+        macId?.let { MeKV.setMacId(it) }
+        return this
     }
-
-    /**
-     * 蓝牙是否可用
-     */
-    private fun checkBlueToothEnable(): Boolean = BleManager.getInstance().isSupportBle
-
-    /**
-     * 获取已经配对的设备
-     */
-    val connectedDevices: List<BleDevice>?
-        get() = BleManager.getInstance().allConnectedDevice
-
 
     private fun notify(bd: BleDevice, uuidS: String, uuidN: String, callback: BleNotifyCallback) {
         BleManager.getInstance().notify(bd, uuidS, uuidN, callback)
@@ -400,30 +400,25 @@ class PadSdkHelper private constructor() {
     }
 
     /**
-     * 控制led灯闪烁
-     * @param count 要设置闪烁的次数
-     * @param intervalTime  要设置闪烁每次的时间  毫秒级 比如1000毫秒
+     * 蓝牙是否可用
      */
-    fun controlLed(bd: BleDevice, count: Int = 3, intervalTime: Int = 1000) {
-        val resultData = ParseHelper.instance.setFlashInfo(count, intervalTime)
-        currGatt?.let { gatt ->
-            val service = ParseHelper.instance.findService(gatt)
-            service?.let { service ->
-                val character = ParseHelper.instance.findCharacteristic(service)
-                character?.let {
-                    write(bd, service.uuid, character?.uuid, resultData)
-                }
-            }
-        }
+    private fun checkBlueToothEnable(): Boolean = BleManager.getInstance().isSupportBle
+
+    /**
+     * 断开所有已连接设备
+     */
+    private fun disconnectAllDevice() {
+        BleManager.getInstance().disconnectAllDevice()
     }
 
     /**
-     * 释放资源
+     * 去设置页面打开蓝牙操作
      */
-    fun release() {
-        BleManager.getInstance().cancelScan()
-        disconnectAllDevice()
-        BleManager.getInstance().destroy()
+    private fun toSettingBluetoothView(activity: Activity) {
+        if (checkBlueToothEnable()) {
+            val blueTooth = Intent(Settings.ACTION_BLUETOOTH_SETTINGS)
+            activity.startActivity(blueTooth)
+        }
     }
 
     /**
