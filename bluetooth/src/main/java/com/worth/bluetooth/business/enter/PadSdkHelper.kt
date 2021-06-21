@@ -140,9 +140,14 @@ class PadSdkHelper private constructor() {
         val result = ParseHelper.instance.parseRecord(bleDevice.scanRecord)
         result?.run {
             when {
-                startsWith(UNPAIRED) -> {
+                startsWith(AFTER_PAIRED) -> {
+                    connectionAndNotify(bleDevice, true)
+                }
+
+                startsWith(UNPAIRED)  || startsWith(LONG_PRESS) -> {
                     connectionAndNotify(bleDevice, false)
                 }
+
                 else -> {
                     Log.e(TAG, "checkDevice--其他广播")
                 }
@@ -338,11 +343,7 @@ class PadSdkHelper private constructor() {
                     data,
                     true,
                     object : BleWriteCallback() {
-                        override fun onWriteSuccess(
-                            current: Int,
-                            total: Int,
-                            justWrite: ByteArray?
-                        ) {
+                        override fun onWriteSuccess(curr: Int, total: Int, data: ByteArray?) {
                             LDBus.sendSpecial2(EVENT_TO_APP, WRITE_OK, "")
                             Log.e(TAG, "写入数据到设备成功")
                         }
