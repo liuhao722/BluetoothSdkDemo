@@ -38,7 +38,8 @@ class PadSdkHelper private constructor() {
     private var scanResultListTemp: MutableList<BleDevice> = mutableListOf()
     private var mScanTimeOut: Long = 3456L
 
-    private var conn = false;
+    private var conn = false
+    private var currGatt: BluetoothGatt? = null
 
     /**
      * 初始化sdk
@@ -197,8 +198,8 @@ class PadSdkHelper private constructor() {
                     status: Int
                 ) {
                     conn = true
+                    currGatt = gatt
                     LDBus.sendSpecial2(EVENT_TO_APP_KEY, EVENT_CONNECTION_SUCCESS, gatt)
-                    ParseHelper.instance.findService(gatt)
                     val service = ParseHelper.instance.findService(gatt)
                     val character = ParseHelper.instance.findCharacteristic(service)
                     service?.run {
@@ -484,7 +485,7 @@ class PadSdkHelper private constructor() {
 
 
     @JvmOverloads
-    fun notify(
+    private fun notify(
         bleDevice: BleDevice,
         uuid_service: String,
         uuid_notify: String,
@@ -501,6 +502,29 @@ class PadSdkHelper private constructor() {
         uuid_notify: String
     ) {
         BleManager.getInstance().stopNotify(bleDevice, uuid_service, uuid_notify, true)
+    }
+
+    /**
+     * 控制led灯闪烁
+     * @param count 要设置闪烁的次数
+     * @param intervalTime  要设置闪烁每次的时间  毫秒级 比如1000毫秒
+     */
+    fun setFlashInfo(bleDevice: BleDevice, count: Int = 3, intervalTime: Int = 1000) {
+        val resultData = ParseHelper.instance.setFlashInfo(count, intervalTime)
+        currGatt?.let { gatt ->
+            val service = ParseHelper.instance.findService(gatt)
+            service?.let {service ->
+                val character = ParseHelper.instance.findCharacteristic(service)
+                character?.let {
+                    write(
+                        bleDevice,
+                        service.uuid.toString(),
+                        character?.uuid.toString(),
+                        resultData
+                    )
+                }
+            }
+        }
     }
 
     /**

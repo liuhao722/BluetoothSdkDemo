@@ -31,7 +31,6 @@ const val EVENT_CONNECTION_SUCCESS = 0x20_000_012                               
 const val EVENT_DIS_CONNECTION = 0x20_000_013                                                       //  扫描结束后-在链接成功某个设备后，断开和某个设备的链接
 
 
-const val EVENT_TYPE = 0x20_000_300                                                                 //  按键事件
 const val EVENT_TYPE_CLICK = 0x20_000_301                                                           //  单击
 const val EVENT_TYPE_DOUBLE_CLICK = 0x20_000_302                                                    //  双击
 

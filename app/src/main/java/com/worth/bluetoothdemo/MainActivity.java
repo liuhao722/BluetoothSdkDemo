@@ -13,6 +13,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.clj.fastble.data.BleDevice;
+import com.clj.fastble.utils.HexUtil;
 import com.worth.bluetooth.business.enter.PadSdkHelper;
 import com.worth.framework.base.core.utils.LDBus;
 
@@ -27,7 +28,8 @@ import static com.worth.bluetooth.business.gloable.PadSdkConstantKt.EVENT_SCAN_F
 import static com.worth.bluetooth.business.gloable.PadSdkConstantKt.EVENT_START_CONNECTION;
 import static com.worth.bluetooth.business.gloable.PadSdkConstantKt.EVENT_START_SCAN;
 import static com.worth.bluetooth.business.gloable.PadSdkConstantKt.EVENT_TO_APP_KEY;
-import static com.worth.bluetooth.business.gloable.PadSdkConstantKt.EVENT_TYPE;
+import static com.worth.bluetooth.business.gloable.PadSdkConstantKt.EVENT_TYPE_CLICK;
+import static com.worth.bluetooth.business.gloable.PadSdkConstantKt.EVENT_TYPE_DOUBLE_CLICK;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -86,7 +88,9 @@ public class MainActivity extends AppCompatActivity {
                         // 可做断开连接提示
                         break;
 
-                    case EVENT_TYPE:
+                    case EVENT_TYPE_CLICK:
+                        break;
+                    case EVENT_TYPE_DOUBLE_CLICK:
                         break;
                 }
             }
@@ -131,8 +135,6 @@ public class MainActivity extends AppCompatActivity {
         if (!bluetoothAdapter.isEnabled()) {
 //            Toast.makeText(this, "蓝牙处于关闭状态，请打开蓝牙", Toast.LENGTH_LONG).show();
             padSdkHelper.onBlueTooth();
-            String result = "09";
-            int dataInt = Integer.parseInt(result);
             return;
         }
     }
@@ -203,5 +205,15 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         padSdkHelper.release();
+    }
+
+    public void show(BleDevice bleDevice, int count, int intervalTime) {
+        int time1 = 1000;
+        int time2 = 6000;
+        if (intervalTime * count * 2 > 65535) {
+            time2 = 65535;
+            time1 = 65535 / 2 / count;
+        }
+        byte[] result = HexUtil.hexStringToBytes("023004" + Integer.toHexString(time1) + Integer.toHexString(time2));
     }
 }

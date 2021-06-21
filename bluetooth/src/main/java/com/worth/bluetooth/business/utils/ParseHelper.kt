@@ -4,6 +4,7 @@ import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattService
 import android.util.Log
+import com.clj.fastble.data.BleDevice
 import com.clj.fastble.utils.HexUtil
 import com.worth.bluetooth.business.gloable.TO_PAIRED_START_KEY
 import com.worth.bluetooth.business.gloable.TO_PAIRED_START_KEY1
@@ -64,6 +65,49 @@ class ParseHelper private constructor() {
         }
     }
 
+    /**
+     * 控制led灯闪烁
+     * @param count 要设置闪烁的次数
+     * @param intervalTime  要设置闪烁每次的时间  毫秒级 比如1000毫秒
+     */
+    fun setFlashInfo(count: Int = 3, intervalTime: Int = 1000): ByteArray{
+        var time1 = 1000
+        var time2 = 6000
+        return if (intervalTime * count * 2 > 65535) {
+            time2 = 65535
+            time1 = 65535 / 2 / count
+            var time1Str = Integer.toHexString(time1)
+            time1Str = mathResult(time1Str)
+            HexUtil.hexStringToBytes(
+                "023004$time1Str${Integer.toHexString(time2)}"
+            )
+        } else {
+            var time1Str = Integer.toHexString(intervalTime)
+            time1Str = mathResult(time1Str)
+            var time2Str = Integer.toHexString(intervalTime*count*2)
+            time2Str = mathResult(time2Str)
+            HexUtil.hexStringToBytes("023004$time1Str$time2Str")
+        }
+    }
+
+    private fun mathResult(timeStr: String): String {
+        var timeStrTemp = timeStr
+        when (timeStrTemp.length) {
+            0 -> {
+                timeStrTemp = "0000"
+            }
+            1 -> {
+                timeStrTemp = "000$timeStrTemp"
+            }
+            2 -> {
+                timeStrTemp = "00$timeStrTemp"
+            }
+            3 -> {
+                timeStrTemp = "0$timeStrTemp"
+            }
+        }
+        return timeStrTemp
+    }
     /**
      * 对象单例
      */
