@@ -229,7 +229,7 @@ class PadSdkHelper private constructor() {
                             || startsWith(DOUBLE_CLICK_DIS_CONN7) -> {
                         if (!FastSendIntercept.doubleSendIntercept()) {
                             LDBus.sendSpecial2(EVENT_TO_APP, DOUBLE_CLICK, device)
-                            Log.e(TAG, "有效事件---->已连接时候——双击的广播-1")
+                            Log.e(TAG, "有效事件---->已连接时候——双击的广播")
                         } else {
                             Log.e(TAG, "20秒内收到重复双击广播信号，只处理一次服务请求")
                         }
