@@ -32,10 +32,10 @@ val failToDeviceFlash: ByteArray = hexStringToBytes("023004006403e8")           
 
 //  校验返回结果的开头数据部分
 const val RESULT_FIRST = "01"                                                                       //  返回的第一位
-const val RESULT_DATA_TYPE_OK_FAIL_TIME_OUT = "01"                                                  //  dataType-返回错误、成功、超时
-const val RESULT_DATA_TYPE_MATH_RESULT = "11"                                                       //  dataType-返回计算结果
-const val RESULT_DATA_TYPE_MAC_ADDRESS = "20"                                                       //  dataType-返回mac地址
-const val RESULT_DATA_TYPE_CLICK = "40"                                                             //  dataType-单机按键
+const val RESULT_DATA_TYPE_1 = "01"                                                                 //  dataType-返回错误、成功、超时
+const val RESULT_DATA_TYPE_2 = "11"                                                                 //  dataType-返回计算结果
+const val RESULT_DATA_TYPE_3 = "20"                                                                 //  dataType-返回mac地址
+const val RESULT_DATA_TYPE_4 = "40"                                                                 //  dataType-单机按键
 
 //  校验返回结果的数据部分
 const val RESULT_DATA_FAIL = "01"                                                                   //  data内容--返回错误

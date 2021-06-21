@@ -22,6 +22,7 @@ import com.worth.bluetooth.business.utils.ParseHelper
 import com.worth.framework.base.core.storage.MeKV
 import com.worth.framework.base.core.utils.LDBus
 import com.worth.framework.base.core.utils.application
+import java.util.*
 
 
 /**
@@ -184,7 +185,7 @@ class PadSdkHelper private constructor() {
                         )
 
                         if (!isPaired) {  //  已经配对过了 不需要再次校验data
-                            write(bd, uuid.toString(), character?.uuid.toString(), checkData)
+                            character?.uuid?.let { write(bd, uuid, it, checkData) }
                         }
                     }
                 }
@@ -216,12 +217,12 @@ class PadSdkHelper private constructor() {
                 result?.run {
                     when {
                         startsWith(AFTER_PAIRED) -> {
-                            connectionAndNotify(bleDevice, true)
+//                            connectionAndNotify(bleDevice, true)                                  //  应要求关闭
                             Log.e(TAG, "配对成功，扫描到该设备的广播，目前进行直接连接处理")
                         }
                         startsWith(LONG_PRESS) -> {
                             Log.e(TAG, "长按10秒配对的广播")
-                            connectionAndNotify(bleDevice, false)
+//                            connectionAndNotify(bleDevice, false)                                 //  执行配对流程--关闭，扫描时候如果是未配对的状态下，不进行数据的返回
                         }
                         startsWith(DOUBLE_CLICK_CONN4)
                                 || startsWith(DOUBLE_CLICK_DIS_CONN5)
@@ -251,7 +252,7 @@ class PadSdkHelper private constructor() {
      */
     private fun BluetoothGattService.handleNotify(
         data: ByteArray?,
-        bleDevice: BleDevice,
+        bd: BleDevice,
         character: BluetoothGattCharacteristic?
     ) {
         var result = HexUtil.formatHexString(data)
@@ -259,80 +260,48 @@ class PadSdkHelper private constructor() {
         if (result.startsWith(RESULT_FIRST)) {
             result = result.substring(2)
             when {
-                result.startsWith(
-                    RESULT_DATA_TYPE_OK_FAIL_TIME_OUT
-                ) -> {              //  成功失败、or超时
+                result.startsWith(RESULT_DATA_TYPE_1) -> {                                          //  成功失败、or超时
                     result = result.substring(4)
                     when {
                         result.startsWith(RESULT_DATA_FAIL) -> {
-                            LDBus.sendSpecial2(EVENT_TO_APP, PAIR_FAIL, bleDevice)
+                            LDBus.sendSpecial2(EVENT_TO_APP, PAIR_FAIL, bd)
                             Log.e(TAG, "配对错误")
                         }
                         result.startsWith(RESULT_DATA_OK) -> {
-                            LDBus.sendSpecial2(EVENT_TO_APP, PAIR_OK, bleDevice)
+                            LDBus.sendSpecial2(EVENT_TO_APP, PAIR_OK, bd)
                             Log.e(TAG, "配对成功")
                         }
                         result.startsWith(RESULT_DATA_TIME_OUT) -> {
-                            LDBus.sendSpecial2(EVENT_TO_APP, PAIR_TIME_OUT, bleDevice)
-                            write(
-                                bleDevice,
-                                uuid.toString(),
-                                character?.uuid.toString(),
-                                failToDeviceFlash
-                            )
+                            LDBus.sendSpecial2(EVENT_TO_APP, PAIR_TIME_OUT, bd)
+                            character?.uuid?.let { write(bd, uuid, it, failToDeviceFlash) }
                             Log.e(TAG, "配对超时")
                         }
                     }
                 }
-                result.startsWith(
-                    RESULT_DATA_TYPE_MATH_RESULT
-                ) -> {        //  返回了运算结果
+                result.startsWith(RESULT_DATA_TYPE_2) -> {                                          //  返回了运算结果
                     result = result.substring(4)
                     result?.run {
                         val resultInt = result.toInt()
                         if (resultInt == 9) {
                             Log.e(TAG, "请求macId")
-                            write(
-                                bleDevice,
-                                uuid.toString(),
-                                character?.uuid.toString(),
-                                resultOk
-                            )
+                            character?.uuid?.let { write(bd, uuid, it, resultOk) }
                         } else {
                             Log.e(TAG, "校验失败")
-                            write(
-                                bleDevice,
-                                uuid.toString(),
-                                character?.uuid.toString(),
-                                resultFail
-                            )
+                            character?.uuid?.let { write(bd,uuid, it,resultFail) }
                         }
                     }
                 }
-                result.startsWith(
-                    RESULT_DATA_TYPE_MAC_ADDRESS
-                ) -> {
+                result.startsWith(RESULT_DATA_TYPE_3) -> {                                          //  返回了mac地址
                     result = result.substring(4)
-                    //  返回了mac地址
                     Log.e(TAG, "设备返回的mac地址:$result")
                     MeKV.setConnMacId(result)
-                    write(
-                        bleDevice,
-                        uuid.toString(),
-                        character?.uuid.toString(),
-                        successToDeviceFlash
-                    )
+                    character?.uuid?.let { write(bd, uuid, it, successToDeviceFlash) }
                 }
-                result.startsWith(RESULT_DATA_TYPE_CLICK) -> {
+                result.startsWith(RESULT_DATA_TYPE_4) -> {
                     //  返回了单击的事件
                     Log.e(TAG, "设备触发了单击的事件")
-                    LDBus.sendSpecial2(EVENT_TO_APP, CLICK, bleDevice)
-                    write(
-                        bleDevice,
-                        uuid.toString(),
-                        character?.uuid.toString(),
-                        toDeviceClickResult
-                    )
+                    character?.uuid?.let { write(bd, uuid, it, toDeviceClickResult) }
+                    LDBus.sendSpecial2(EVENT_TO_APP, CLICK, bd)
                 }
             }
         }
@@ -366,10 +335,10 @@ class PadSdkHelper private constructor() {
      *  write不带boolean split参数的方法默认将数据分包20多个字节。
      *  在onWriteSuccess回调方法上：current表示当前发送的包数，total表示本次的总包数据，justWrite表示刚刚发送成功的包。
      */
-    fun write(bd: BleDevice, uuidS: String, uuidW: String, d: ByteArray) {
+    fun write(bd: BleDevice, uuidS: UUID, uuidW: UUID, data: ByteArray) {
         PadSdkGlobalHandler.ins().mHandler.get()?.postDelayed({
             BleManager.getInstance()
-                .write(bd, uuidS, uuidW, d, true, object : BleWriteCallback() {
+                .write(bd, uuidS.toString(), uuidW.toString(), data, true, object : BleWriteCallback() {
                     override fun onWriteSuccess(current: Int, total: Int, justWrite: ByteArray?) {
                         LDBus.sendSpecial2(EVENT_TO_APP, WRITE_OK, "")
                         Log.e(TAG, "写入数据到设备成功")
@@ -399,7 +368,7 @@ class PadSdkHelper private constructor() {
     /**
      * 去设置页面打开蓝牙操作
      */
-    fun toSettingBluetooth(activity: Activity) {
+    fun toSettingBluetoothView(activity: Activity) {
         if (checkBlueToothEnable()) {
             val blueTooth = Intent(Settings.ACTION_BLUETOOTH_SETTINGS)
             activity.startActivity(blueTooth)
@@ -409,7 +378,7 @@ class PadSdkHelper private constructor() {
     /**
      * 蓝牙是否可用
      */
-    fun checkBlueToothEnable(): Boolean = BleManager.getInstance().isSupportBle
+    private fun checkBlueToothEnable(): Boolean = BleManager.getInstance().isSupportBle
 
     /**
      * 获取已经配对的设备
@@ -418,12 +387,11 @@ class PadSdkHelper private constructor() {
         get() = BleManager.getInstance().allConnectedDevice
 
 
-    @JvmOverloads
     private fun notify(bd: BleDevice, uuidS: String, uuidN: String, callback: BleNotifyCallback) {
         BleManager.getInstance().notify(bd, uuidS, uuidN, callback)
     }
 
-    fun stopNotify(bd: BleDevice, uuidS: String, uuidN: String) {
+    private fun stopNotify(bd: BleDevice, uuidS: String, uuidN: String) {
         BleManager.getInstance().stopNotify(bd, uuidS, uuidN)
     }
 
@@ -432,19 +400,14 @@ class PadSdkHelper private constructor() {
      * @param count 要设置闪烁的次数
      * @param intervalTime  要设置闪烁每次的时间  毫秒级 比如1000毫秒
      */
-    fun setFlashInfo(bleDevice: BleDevice, count: Int = 3, intervalTime: Int = 1000) {
+    fun controlLed(bd: BleDevice, count: Int = 3, intervalTime: Int = 1000) {
         val resultData = ParseHelper.instance.setFlashInfo(count, intervalTime)
         currGatt?.let { gatt ->
             val service = ParseHelper.instance.findService(gatt)
             service?.let { service ->
                 val character = ParseHelper.instance.findCharacteristic(service)
                 character?.let {
-                    write(
-                        bleDevice,
-                        service.uuid.toString(),
-                        character?.uuid.toString(),
-                        resultData
-                    )
+                    write(bd, service.uuid, character?.uuid, resultData)
                 }
             }
         }
