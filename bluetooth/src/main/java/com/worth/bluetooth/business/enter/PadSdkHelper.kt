@@ -349,7 +349,7 @@ class PadSdkHelper private constructor() {
                 when {
                     startsWith(AFTER_PAIRED) -> {
 //                            connectionAndNotify(bleDevice, true)                                  //  应要求关闭
-                        Log.e(TAG, "配对成功后设备发送的广播-应要求已关闭")
+                        Log.e(TAG, "配对成功后设备发送的广播-应要求已关闭自动链接功能，需要用户手动在app列表中点击")
                         find = true
                     }
                     startsWith(LONG_PRESS) -> {
