@@ -206,46 +206,80 @@ class PadSdkHelper private constructor() {
             Log.e(TAG, "当前设备已连接-不进行逻辑处理")
         }
     }
-
     /**
      * 扫描结果发现是长按的事件且未连接该设备
      */
-    private fun checkDeviceList(devices: List<BleDevice>) {
-        devices?.forEach { bleDevice ->
-            if (!BleManager.getInstance().isConnected(bleDevice)) {
-                val result = ParseHelper.instance.parseRecord(bleDevice.scanRecord)
-                result?.run {
-                    when {
-                        startsWith(AFTER_PAIRED) -> {
+    private fun checkDeviceList(devices: List<BleDevice>) :List<BleDevice>{
+        return devices?.filter {device ->
+            var resultFind = false
+            val result = ParseHelper.instance.parseRecord(device.scanRecord)
+            result?.run {
+                when {
+                    startsWith(AFTER_PAIRED) -> {
 //                            connectionAndNotify(bleDevice, true)                                  //  应要求关闭
-                            Log.e(TAG, "配对成功，扫描到该设备的广播，目前进行直接连接处理")
-                        }
-                        startsWith(LONG_PRESS) -> {
-                            Log.e(TAG, "长按10秒配对的广播")
+                        Log.e(TAG, "配对成功，扫描到该设备的广播，目前进行直接连接处理")
+                        resultFind = true
+                    }
+                    startsWith(LONG_PRESS) -> {
+                        Log.e(TAG, "长按10秒配对的广播")
 //                            connectionAndNotify(bleDevice, false)                                 //  执行配对流程--关闭，扫描时候如果是未配对的状态下，不进行数据的返回
+                        resultFind = true
+                    }
+                    startsWith(DOUBLE_CLICK_CONN4)
+                            || startsWith(DOUBLE_CLICK_DIS_CONN5)
+                            || startsWith(DOUBLE_CLICK_DIS_CONN7) -> {
+                        if (!FastSendIntercept.doubleSendIntercept()) {
+                            LDBus.sendSpecial2(EVENT_TO_APP, DOUBLE_CLICK, device)
+                            Log.e(TAG, "有效事件---->已连接时候——双击的广播-1")
+                        } else {
+                            Log.e(TAG, "20秒内收到重复双击广播信号，只处理一次服务请求")
                         }
-                        startsWith(DOUBLE_CLICK_CONN4)
-                                || startsWith(DOUBLE_CLICK_DIS_CONN5)
-                                || startsWith(DOUBLE_CLICK_DIS_CONN7) -> {
-                            if (!FastSendIntercept.doubleSendIntercept()) {
-                                LDBus.sendSpecial2(
-                                    EVENT_TO_APP,
-                                    DOUBLE_CLICK,
-                                    bleDevice
-                                )
-                                Log.e(TAG, "有效事件---->已连接时候——双击的广播-1")
-                            } else {
-                                Log.e(TAG, "20秒内收到重复双击广播信号，只处理一次服务请求")
-                            }
-                        }
-                        else -> {
-                            Log.e(TAG, "未配对过，需要手动点击配对--app端拿到list之后进行操作")
-                        }
+                        resultFind = false
+                    }
+                    else -> {
+                        Log.e(TAG, "未配对过，需要手动点击配对--app端拿到list之后进行操作")
+                        resultFind = false
                     }
                 }
             }
+             resultFind
         }
     }
+//    /**
+//     * 扫描结果发现是长按的事件且未连接该设备-临时决定不要该方法，暂时注销掉
+//     */
+//    private fun checkDeviceList(devices: List<BleDevice>) {
+//        devices?.forEach { bleDevice ->
+//            if (!BleManager.getInstance().isConnected(bleDevice)) {
+//                val result = ParseHelper.instance.parseRecord(bleDevice.scanRecord)
+//                result?.run {
+//                    when {
+//                        startsWith(AFTER_PAIRED) -> {
+////                            connectionAndNotify(bleDevice, true)                                  //  应要求关闭
+//                            Log.e(TAG, "配对成功，扫描到该设备的广播，目前进行直接连接处理")
+//                        }
+//                        startsWith(LONG_PRESS) -> {
+//                            Log.e(TAG, "长按10秒配对的广播")
+////                            connectionAndNotify(bleDevice, false)                                 //  执行配对流程--关闭，扫描时候如果是未配对的状态下，不进行数据的返回
+//                        }
+//                        startsWith(DOUBLE_CLICK_CONN4)
+//                                || startsWith(DOUBLE_CLICK_DIS_CONN5)
+//                                || startsWith(DOUBLE_CLICK_DIS_CONN7) -> {
+//                            if (!FastSendIntercept.doubleSendIntercept()) {
+//                                LDBus.sendSpecial2(EVENT_TO_APP, DOUBLE_CLICK, bleDevice)
+//                                Log.e(TAG, "有效事件---->已连接时候——双击的广播-1")
+//                            } else {
+//                                Log.e(TAG, "20秒内收到重复双击广播信号，只处理一次服务请求")
+//                            }
+//                        }
+//                        else -> {
+//                            Log.e(TAG, "未配对过，需要手动点击配对--app端拿到list之后进行操作")
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
 
     /**
      * 处理notify的结果
@@ -287,7 +321,7 @@ class PadSdkHelper private constructor() {
                             character?.uuid?.let { write(bd, uuid, it, resultOk) }
                         } else {
                             Log.e(TAG, "校验失败")
-                            character?.uuid?.let { write(bd,uuid, it,resultFail) }
+                            character?.uuid?.let { write(bd, uuid, it, resultFail) }
                         }
                     }
                 }
@@ -338,17 +372,27 @@ class PadSdkHelper private constructor() {
     fun write(bd: BleDevice, uuidS: UUID, uuidW: UUID, data: ByteArray) {
         PadSdkGlobalHandler.ins().mHandler.get()?.postDelayed({
             BleManager.getInstance()
-                .write(bd, uuidS.toString(), uuidW.toString(), data, true, object : BleWriteCallback() {
-                    override fun onWriteSuccess(current: Int, total: Int, justWrite: ByteArray?) {
-                        LDBus.sendSpecial2(EVENT_TO_APP, WRITE_OK, "")
-                        Log.e(TAG, "写入数据到设备成功")
-                    }
+                .write(
+                    bd,
+                    uuidS.toString(),
+                    uuidW.toString(),
+                    data,
+                    true,
+                    object : BleWriteCallback() {
+                        override fun onWriteSuccess(
+                            current: Int,
+                            total: Int,
+                            justWrite: ByteArray?
+                        ) {
+                            LDBus.sendSpecial2(EVENT_TO_APP, WRITE_OK, "")
+                            Log.e(TAG, "写入数据到设备成功")
+                        }
 
-                    override fun onWriteFailure(exception: BleException?) {
-                        LDBus.sendSpecial2(EVENT_TO_APP, WRITE_FAIL, "")
-                        Log.e(TAG, "写入数据到设备失败")
-                    }
-                })
+                        override fun onWriteFailure(exception: BleException?) {
+                            LDBus.sendSpecial2(EVENT_TO_APP, WRITE_FAIL, "")
+                            Log.e(TAG, "写入数据到设备失败")
+                        }
+                    })
         }, 500)
     }
 
