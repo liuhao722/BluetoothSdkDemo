@@ -160,7 +160,7 @@ class PadSdkHelper private constructor() {
     /**
      * 获取已经配对的设备
      */
-    val connectedDevices: List<BleDevice>?
+    internal val connectedDevices: List<BleDevice>?
         get() = BleManager.getInstance().allConnectedDevice
 
     /**

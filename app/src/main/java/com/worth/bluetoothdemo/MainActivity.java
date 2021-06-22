@@ -6,6 +6,8 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -43,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
     private PadSdkHelper padSdkHelper;
     private List<BleDevice> mScanResultList = new ArrayList<>();
     private BleDevice mBleDevice;
+    private boolean scan = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,30 +57,55 @@ public class MainActivity extends AppCompatActivity {
         initObserver();         //  监听sdk错误的返回
     }
 
+    private Button search;
+    private EditText et1, et2;
+
+    private void initView() {
+        search = findViewById(R.id.btn_search);
+        et1 = findViewById(R.id.et_count);
+        et2 = findViewById(R.id.et_interval);
+        search.setOnClickListener(v -> {
+            checkPermissions();
+            if (checkGPSIsOpen()) {
+                if (scan) {      //  名称过滤只是第一步，决定返回与否蓝牙设备信息还是由广播解析出来的字段决定的
+                    search.setText("取消扫描");
+                    padSdkHelper.scanDevices(5000);
+//                    padSdkHelper.scanDevices(5000,"proximity");
+//                    padSdkHelper.scanDevices(5000,"proximity", "iMEMBER");
+                } else {
+                    search.setText("开始扫描");
+                    padSdkHelper.cancelScan();
+                }
+
+                scan = !scan;
+            }
+        });
+
+        findViewById(R.id.btn_conn).setOnClickListener(v -> {
+            if (mBleDevice != null) {
+                padSdkHelper.connect(mBleDevice);
+            }
+        });
+
+        findViewById(R.id.btn_dis_conn).setOnClickListener(v -> {
+            if (mBleDevice != null) {
+                padSdkHelper.disconnect(mBleDevice);
+            }
+        });
+
+        findViewById(R.id.btn_control_led).setOnClickListener(v -> {
+            if (mBleDevice != null) {
+                int count = et1.getText().toString().isEmpty() ? 0 : Integer.parseInt(et1.getText().toString());
+                int interval = et2.getText().toString().isEmpty() ? 0 : Integer.parseInt(et2.getText().toString());
+                padSdkHelper.controlLed(mBleDevice, count, interval);
+            }
+        });
+    }
+
     private void initSdk() {
         padSdkHelper = PadSdkHelper.Companion.getInstance().initPadSdk();
     }
 
-    /**
-     * const val START_SCAN = 0x20_000_001                                                          //  开始扫描
-     * const val SCANNING = 0x20_000_002                                                            //  扫描中
-     * const val SCAN_FINISH = 0x20_000_003                                                         //  扫描结束
-     *
-     * const val START_CONN = 0x20_000_010                                                          //  扫描结束后-开始连接某个设备
-     * const val CONN_FAIL = 0x20_000_011                                                           //  扫描结束后-连接设备失败
-     * const val CONN_OK = 0x20_000_012                                                             //  扫描结束后-连接设备成功
-     * const val DIS_CONN = 0x20_000_013                                                            //  扫描结束后-在链接成功某个设备后，断开和某个设备的链接
-     *
-     * const val WRITE_OK = 0x20_000_020                                                            //  写入数据到设备成功
-     * const val WRITE_FAIL = 0x20_000_021                                                          //  写入数据到设备失败
-     *
-     * const val PAIR_OK = 0x20_000_031                                                             //  配对成功
-     * const val PAIR_FAIL = 0x20_000_032                                                           //  配对失败
-     * const val PAIR_TIME_OUT = 0x20_000_033                                                       //  配对超时
-     *
-     * const val CLICK = 0x20_000_301                                                               //  单击
-     * const val DOUBLE_CLICK = 0x20_000_302                                                        //  双击
-     */
     private void initObserver() {
         LDBus.INSTANCE.observer2(EVENT_TO_APP, (eventKey, objectParams) -> {
             int key;
@@ -134,32 +162,6 @@ public class MainActivity extends AppCompatActivity {
             return null;
         });
 
-    }
-
-    private void initView() {
-        findViewById(R.id.btn_search).setOnClickListener(v -> {
-            checkPermissions();
-            if (checkGPSIsOpen()) {
-                padSdkHelper.scanDevices(5000);
-            }
-        });
-
-        findViewById(R.id.btn_conn).setOnClickListener(v -> {
-            if (mBleDevice != null) {
-                padSdkHelper.connect(mBleDevice);
-            }
-        });
-
-        findViewById(R.id.btn_dis_conn).setOnClickListener(v -> {
-            if (mBleDevice != null) {
-                padSdkHelper.disconnect(mBleDevice);
-            }
-        });
-
-        findViewById(R.id.btn_all_devices).setOnClickListener(v -> {
-            List<BleDevice> list = padSdkHelper.getConnectedDevices();                              //  获取已连接的全部设备信息
-            LogHelper.printAndShowScanResult(list);
-        });
     }
 
     private void showScanResult(List<BleDevice> list) {
