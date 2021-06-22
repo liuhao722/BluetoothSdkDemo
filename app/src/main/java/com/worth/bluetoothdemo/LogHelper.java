@@ -1,13 +1,9 @@
 package com.worth.bluetoothdemo;
 
-import android.bluetooth.BluetoothDevice;
-import android.widget.TextView;
-
 import com.clj.fastble.data.BleDevice;
 import com.worth.framework.base.core.utils.L;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * Author:  LiuHao
@@ -23,8 +19,8 @@ public class LogHelper {
             StringBuilder sb = new StringBuilder();
             for (BleDevice item : list) {
                 sb.append((list.indexOf(item) + 1) + "、蓝牙名称: " + item.getName())
-                        .append("\tmac地址: " + item.getMac())
-                        .append("\t信号量:" + item.getRssi())
+                        .append("\t\tmac地址: " + item.getMac())
+                        .append("\t\t信号量:" + item.getRssi())
                         .append("\n")
 //                        .append("\tBluetoothDevice: " + item.getDevice().toString())
                 ;
