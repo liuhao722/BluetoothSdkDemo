@@ -17,16 +17,18 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.clj.fastble.data.BleDevice;
-import com.clj.fastble.utils.HexUtil;
 import com.worth.bluetooth.business.enter.PadSdkHelper;
 import com.worth.framework.base.core.utils.LDBus;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.CLICK;
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.CONN_FAIL;
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.CONN_OK;
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.DIS_CONN;
+import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.DOUBLE_CLICK;
+import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.EVENT_TO_APP;
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.PAIR_FAIL;
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.PAIR_OK;
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.PAIR_TIME_OUT;
@@ -34,9 +36,6 @@ import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.SCANNING;
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.SCAN_FINISH;
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.START_CONN;
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.START_SCAN;
-import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.EVENT_TO_APP;
-import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.CLICK;
-import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.DOUBLE_CLICK;
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.WRITE_FAIL;
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.WRITE_OK;
 
@@ -49,18 +48,19 @@ public class MainActivity extends AppCompatActivity {
     private BleDevice mBleDevice;
     private boolean scan = true;
 
+    private Button search, conn, disConn, led;
+    private EditText et1, et2;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         initPermission();       //  初始化依赖的权限
         initView();
+        initListener();
         initSdk();              //  初始化sdk
         initObserver();         //  监听sdk错误的返回
     }
-
-    private Button search, conn, disConn, led;
-    private EditText et1, et2;
 
     private void initView() {
         search = findViewById(R.id.btn_search);
@@ -69,15 +69,17 @@ public class MainActivity extends AppCompatActivity {
         conn = findViewById(R.id.btn_conn);
         disConn = findViewById(R.id.btn_dis_conn);
         led = findViewById(R.id.btn_control_led);
+    }
 
+    private void initListener() {
         search.setOnClickListener(v -> {
-            checkPermissions();
+            checkBluetooth();
             if (checkGPSIsOpen()) {
                 if (scan) {      //  名称过滤只是第一步，决定返回与否蓝牙设备信息还是由广播解析出来的字段决定的
                     search.setText("取消扫描");
                     padSdkHelper.scanDevices(5000);
-//                    padSdkHelper.scanDevices(5000,"proximity");
-//                    padSdkHelper.scanDevices(5000,"proximity", "iMEMBER");
+//                    padSdkHelper.scanDevices(5000, "proximity");
+//                    padSdkHelper.scanDevices(5000, "proximity", "iMEMBER");
                 } else {
                     search.setText("开始扫描");
                     padSdkHelper.cancelScan();
@@ -118,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
             if (eventKey != null && (key = (int) eventKey) > 0) {
                 switch (key) {
                     case START_SCAN:                                                                //  开始扫描-做上次扫描数据清理工作
-                        // 可做loading弹窗
+                        // 可做扫描的loading弹窗，但未连接情况下 是一直循环在扫描 所以不太合适！
                         break;
                     case SCANNING:                                                                  //  扫描中-可添加到自定义的list中 每次扫描到就展示到自定义的adapter中
                         if (objectParams != null && objectParams instanceof BleDevice) {
@@ -138,7 +140,7 @@ public class MainActivity extends AppCompatActivity {
                         et2.setVisibility(View.GONE);
                         led.setVisibility(View.GONE);
                         conn.setText("蓝牙连接中...");
-                        // 可做扫描连接的loading弹窗，但未连接情况下 是一直循环在扫描 却也不合适！
+                        // 可做连接的loading弹窗
                         break;
                     case CONN_FAIL:                                                                 //  扫描结束后-连接设备失败
                         et1.setVisibility(View.GONE);
@@ -194,12 +196,18 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    /**
+     * test在界面上展示扫描到符合规则的列表结果
+     */
     private void showScanResult(List<BleDevice> list) {
         TextView tv = findViewById(R.id.tv_result_list);
         tv.setText(LogHelper.printAndShowScanResult(list));
     }
 
-    private void checkPermissions() {
+    /**
+     * 检查蓝牙打开装填
+     */
+    private void checkBluetooth() {
         BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (!bluetoothAdapter.isEnabled()) {
 //            Toast.makeText(this, "蓝牙处于关闭状态，请打开蓝牙", Toast.LENGTH_LONG).show();
@@ -274,15 +282,5 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         padSdkHelper.release();
-    }
-
-    public void show(BleDevice bleDevice, int count, int intervalTime) {
-        int time1 = 1000;
-        int time2 = 6000;
-        if (intervalTime * count * 2 > 65535) {
-            time2 = 65535;
-            time1 = 65535 / 2 / count;
-        }
-        byte[] result = HexUtil.hexStringToBytes("023004" + Integer.toHexString(time1) + Integer.toHexString(time2));
     }
 }
