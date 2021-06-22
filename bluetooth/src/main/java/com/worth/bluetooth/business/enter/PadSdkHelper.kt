@@ -208,17 +208,19 @@ class PadSdkHelper private constructor() {
         if (BleManager.getInstance().isConnected(bd)) return
         BleManager.getInstance().connect(bd, object : BleGattCallback() {
             override fun onStartConnect() {
+                cancelScan()
                 conn = false
                 LDBus.sendSpecial2(EVENT_TO_APP, START_CONN, bd)
             }
 
             override fun onConnectFail(bd: BleDevice, ex: BleException) {
+                scanDevices()
                 conn = false
                 LDBus.sendSpecial2(EVENT_TO_APP, CONN_FAIL, ex)
             }
 
             override fun onConnectSuccess(bd: BleDevice, gatt: BluetoothGatt, status: Int) {
-                cancelScan()                                                                        //  链接一台设备后，停止扫描；
+                cancelScan()
                 conn = true
                 currGatt = gatt
                 LDBus.sendSpecial2(EVENT_TO_APP, CONN_OK, gatt)

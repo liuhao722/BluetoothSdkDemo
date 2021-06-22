@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -57,13 +58,17 @@ public class MainActivity extends AppCompatActivity {
         initObserver();         //  监听sdk错误的返回
     }
 
-    private Button search;
+    private Button search, conn, disConn, led;
     private EditText et1, et2;
 
     private void initView() {
         search = findViewById(R.id.btn_search);
         et1 = findViewById(R.id.et_count);
         et2 = findViewById(R.id.et_interval);
+        conn = findViewById(R.id.btn_conn);
+        disConn = findViewById(R.id.btn_dis_conn);
+        led = findViewById(R.id.btn_control_led);
+
         search.setOnClickListener(v -> {
             checkPermissions();
             if (checkGPSIsOpen()) {
@@ -81,19 +86,19 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        findViewById(R.id.btn_conn).setOnClickListener(v -> {
+        conn.setOnClickListener(v -> {
             if (mBleDevice != null) {
                 padSdkHelper.connect(mBleDevice);
             }
         });
 
-        findViewById(R.id.btn_dis_conn).setOnClickListener(v -> {
+        disConn.setOnClickListener(v -> {
             if (mBleDevice != null) {
                 padSdkHelper.disconnect(mBleDevice);
             }
         });
 
-        findViewById(R.id.btn_control_led).setOnClickListener(v -> {
+        led.setOnClickListener(v -> {
             if (mBleDevice != null) {
                 int count = et1.getText().toString().isEmpty() ? 0 : Integer.parseInt(et1.getText().toString());
                 int interval = et2.getText().toString().isEmpty() ? 0 : Integer.parseInt(et2.getText().toString());
@@ -128,15 +133,32 @@ public class MainActivity extends AppCompatActivity {
                         break;
 
                     case START_CONN:                                                                //  扫描结束后-开始连接某个设备
+                        et1.setVisibility(View.GONE);
+                        et2.setVisibility(View.GONE);
+                        led.setVisibility(View.GONE);
+                        conn.setText("蓝牙连接中...");
                         // 可做扫描连接的loading弹窗，但未连接情况下 是一直循环在扫描 却也不合适！
                         break;
                     case CONN_FAIL:                                                                 //  扫描结束后-连接设备失败
+                        et1.setVisibility(View.GONE);
+                        et2.setVisibility(View.GONE);
+                        led.setVisibility(View.GONE);
+                        conn.setText("蓝牙连接失败");
                         // 可做连接失败提示，并结束连接的loading弹窗
                         break;
                     case CONN_OK:                                                                   //  扫描结束后-连接设备成功
                         // 可做连接成功提示，并结束连接的loading弹窗
+                        conn.setText("蓝牙连接成功");
+                        et1.setVisibility(View.VISIBLE);
+                        et2.setVisibility(View.VISIBLE);
+                        led.setVisibility(View.VISIBLE);
                         break;
                     case DIS_CONN:                                                                  //  扫描结束后-在链接成功某个设备后，断开和某个设备的链接
+                        et1.setVisibility(View.GONE);
+                        et2.setVisibility(View.GONE);
+                        led.setVisibility(View.GONE);
+                        conn.setText("蓝牙连接");
+                        disConn.setText("已断开蓝牙");
                         // 可做断开连接提示
                         break;
 
