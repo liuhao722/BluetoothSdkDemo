@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -163,20 +164,27 @@ public class MainActivity extends AppCompatActivity {
                         break;
 
                     case CLICK:                                                                     //  会员卡单击事件回调
+                        Log.e(TAG, "app-收到会员卡单击事件");
                         break;
                     case DOUBLE_CLICK:                                                              //  会员卡双击事件回调
+                        Log.e(TAG, "app-收到会员卡双击事件");
                         break;
 
                     case WRITE_OK:                                                                  //  写入成功
+                        Log.e(TAG, "app-收到写入会员卡数据成功事件");
                         break;
                     case WRITE_FAIL:                                                                //  写入失败
+                        Log.e(TAG, "app-收到写入会员卡数据失败事件");
                         break;
 
                     case PAIR_OK:                                                                   //  配对成功
+                        Log.e(TAG, "app-收到与会员卡配对成功事件");
                         break;
                     case PAIR_FAIL:                                                                 //  配对失败
+                        Log.e(TAG, "app-收到与会员卡配对失败事件");
                         break;
-                    case PAIR_TIME_OUT:                                                             //  配对超市
+                    case PAIR_TIME_OUT:                                                             //  配对超时
+                        Log.e(TAG, "app-收到与会员卡配对超时事件");
                         break;
 
                 }
