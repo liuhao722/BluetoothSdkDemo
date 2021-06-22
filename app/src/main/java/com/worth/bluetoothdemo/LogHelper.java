@@ -22,9 +22,10 @@ public class LogHelper {
         if (!list.isEmpty()) {
             StringBuilder sb = new StringBuilder();
             for (BleDevice item : list) {
-                sb.append(list.indexOf(item) + "、蓝牙名称: " + item.getName())
+                sb.append((list.indexOf(item) + 1) + "、蓝牙名称: " + item.getName())
                         .append("\tmac地址: " + item.getMac())
                         .append("\t信号量:" + item.getRssi())
+                        .append("\n")
 //                        .append("\tBluetoothDevice: " + item.getDevice().toString())
                 ;
             }
