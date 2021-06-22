@@ -266,7 +266,7 @@ class PadSdkHelper private constructor() {
 
         override fun onScanFinished(scanResultList: MutableList<BleDevice>?) {
             scanResultList?.run {
-                val result = checkDeviceList(this)
+                val result = ParseHelper.instance.checkDeviceList(this)
                 if (scanResultListTemp.isNotEmpty() && scanResultListTemp == scanResultList) return
                 scanResultListTemp = result
                 LDBus.sendSpecial2(EVENT_TO_APP, SCAN_FINISH, result)
@@ -337,46 +337,6 @@ class PadSdkHelper private constructor() {
                     LDBus.sendSpecial2(EVENT_TO_APP, CLICK, bd)
                 }
             }
-        }
-    }
-
-    /**
-     * 扫描结果发现是长按的事件且未连接该设备
-     */
-    private fun checkDeviceList(devices: List<BleDevice>): List<BleDevice> {
-        return devices?.filter { device ->
-            var find = false
-            val result = ParseHelper.instance.parseRecord(device.scanRecord)
-            result?.run {
-                when {
-                    startsWith(AFTER_PAIRED) -> {
-//                            connectionAndNotify(bleDevice, true)                                  //  应要求关闭
-                        Log.e(TAG, "配对成功后设备发送的广播-应要求已关闭自动链接功能，需要用户手动在app列表中点击")
-                        find = true
-                    }
-                    startsWith(LONG_PRESS) -> {
-                        Log.e(TAG, "长按10秒配对的广播")
-//                            connectionAndNotify(bleDevice, false)                                 //  执行配对流程--关闭，扫描时候如果是未配对的状态下，不进行数据的返回
-                        find = true
-                    }
-                    startsWith(DOUBLE_CLICK_CONN4)
-                            || startsWith(DOUBLE_CLICK_DIS_CONN5)
-                            || startsWith(DOUBLE_CLICK_DIS_CONN7) -> {
-                        if (!FastSendIntercept.doubleSend()) {
-                            LDBus.sendSpecial2(EVENT_TO_APP, DOUBLE_CLICK, device)
-                            Log.e(TAG, "有效事件---->已连接时候——双击的广播")
-                        } else {
-                            Log.e(TAG, "20秒内收到重复双击广播信号，只处理一次服务请求")
-                        }
-                        find = false
-                    }
-                    else -> {
-                        Log.e(TAG, "未配对过，需要用户长按进行配对后，才能扫描到")
-                        find = false
-                    }
-                }
-            }
-            find
         }
     }
 
