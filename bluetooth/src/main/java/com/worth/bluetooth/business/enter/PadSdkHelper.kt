@@ -19,7 +19,6 @@ import com.clj.fastble.utils.HexUtil
 import com.worth.bluetooth.business.ext.setConnMacId
 import com.worth.bluetooth.business.ext.setMacId
 import com.worth.bluetooth.business.gloable.*
-import com.worth.bluetooth.business.utils.FastSendIntercept
 import com.worth.bluetooth.business.utils.PadSdkGlobalHandler
 import com.worth.bluetooth.business.utils.ParseHelper
 import com.worth.framework.base.core.storage.MeKV
