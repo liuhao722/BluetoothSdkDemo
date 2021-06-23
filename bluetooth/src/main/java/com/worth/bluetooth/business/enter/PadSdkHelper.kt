@@ -90,7 +90,7 @@ class PadSdkHelper private constructor() {
             val content = it.subSequence(2, it.length)
             result?.let { type ->
                 when {
-                    type.startsWith(I_STATION, true) -> {                               //  基站广播
+                    type.startsWith(I_STATION, true) -> {                               //  基站广播-返回的设备列表不会显示基站信息，暂时留此处做备用
 
                     }
                     type.startsWith(VIP_CARD, true) -> {                                //  vip卡广播

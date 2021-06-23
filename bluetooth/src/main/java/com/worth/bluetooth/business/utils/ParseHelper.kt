@@ -24,7 +24,8 @@ class ParseHelper private constructor() {
      */
     fun parseRecord(scanRecord: ByteArray): String? {
         val temp = ByteArray(11)
-        temp[0] = scanRecord[5]             //  状态信息
+        temp[0] = scanRecord[5]             //  包头信息-区分是蓝牙还是基站
+
         temp[0] = scanRecord[6]             //  状态信息
         temp[1] = scanRecord[7]             //  状态信息
 
@@ -124,7 +125,7 @@ class ParseHelper private constructor() {
                     when {
                         type.startsWith(I_STATION, true) -> {                           //  基站广播
                             find = false
-
+                            LDBus.sendSpecial2(EVENT_TO_APP, STATION_RESULT, content)               //  返回给app 状态信息2byte 产品id2byte mac地址6byte
                         }
                         type.startsWith(VIP_CARD, true) -> {                            //  vip卡广播
                             content?.run {
@@ -162,6 +163,36 @@ class ParseHelper private constructor() {
             }
             find
         }
+    }
+
+    /**
+     * 获取状态信息
+     */
+    fun getStateInfo(scanRecordStr:String?):String{
+        scanRecordStr?.run {
+            return substring(0, 2)
+        }
+        return ""
+    }
+
+    /**
+     * 获取产品id
+     */
+    fun getProductId(scanRecordStr:String?):String{
+        scanRecordStr?.run {
+            return substring(2, 4)
+        }
+        return ""
+    }
+
+    /**
+     * 获取mac地址
+     */
+    fun getMacId(scanRecordStr:String?):String{
+        scanRecordStr?.run {
+            return substring(4, 10)
+        }
+        return ""
     }
 
 

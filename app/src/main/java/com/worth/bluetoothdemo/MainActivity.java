@@ -18,6 +18,7 @@ import androidx.core.content.ContextCompat;
 
 import com.clj.fastble.data.BleDevice;
 import com.worth.bluetooth.business.enter.PadSdkHelper;
+import com.worth.bluetooth.business.utils.ParseHelper;
 import com.worth.framework.base.core.utils.LDBus;
 
 import java.util.ArrayList;
@@ -36,6 +37,7 @@ import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.SCANNING;
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.SCAN_FINISH;
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.START_CONN;
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.START_SCAN;
+import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.STATION_RESULT;
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.WRITE_FAIL;
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.WRITE_OK;
 
@@ -120,6 +122,16 @@ public class MainActivity extends AppCompatActivity {
             int key;
             if (eventKey != null && (key = (int) eventKey) > 0) {
                 switch (key) {
+                    case STATION_RESULT:                                                            //  扫描到基站信息-返回给app 状态信息2byte 产品id2byte mac地址6byte
+                        if (objectParams != null) {
+                            String state = ParseHelper.Companion.getInstance().getStateInfo(objectParams.toString());
+                            String productId = ParseHelper.Companion.getInstance().getProductId(objectParams.toString());
+                            String macId = ParseHelper.Companion.getInstance().getMacId(objectParams.toString());
+                            Log.e(TAG, "状态信息--->2位：" + state);
+                            Log.e(TAG, "产品Id--->2位：" + productId);
+                            Log.e(TAG, "macId--->2位：" + state);
+                        }
+                        break;
                     case START_SCAN:                                                                //  开始扫描-做上次扫描数据清理工作
                         // 可做扫描的loading弹窗，但未连接情况下 是一直循环在扫描 所以不太合适！
                         break;
