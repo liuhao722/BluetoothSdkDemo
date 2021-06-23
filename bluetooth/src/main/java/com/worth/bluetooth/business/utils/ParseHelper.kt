@@ -122,11 +122,11 @@ class ParseHelper private constructor() {
                 val content = it.subSequence(2, it.length)
                 result?.let { type ->
                     when {
-                        type.startsWith(I_STATION) -> {             //  基站广播
+                        type.startsWith(I_STATION, true) -> {                           //  基站广播
                             find = false
 
                         }
-                        type.startsWith(VIP_CARD) -> {              //  vip卡广播
+                        type.startsWith(VIP_CARD, true) -> {                            //  vip卡广播
                             content?.run {
                                 when {
                                     startsWith(AFTER_PAIRED) -> {
