@@ -80,6 +80,7 @@ public class MainActivity extends AppCompatActivity {
                     padSdkHelper.scanDevices(5000);
 //                    padSdkHelper.scanDevices(5000, "proximity");
 //                    padSdkHelper.scanDevices(5000, "proximity", "iMEMBER");
+//                    padSdkHelper.scanDevices(5000, "proximity", "iMEMBER", "iStation");
                 } else {
                     search.setText("开始扫描");
                     padSdkHelper.cancelScan();

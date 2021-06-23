@@ -67,12 +67,12 @@ class PadSdkHelper private constructor() {
     /**
      * 搜索设备
      * 可以获取到蓝牙的名称和物理地址，在未连接之前，拿不到uuid。
-     * @param bluetoothName 过滤蓝牙的前缀名称
+     * @param bluetoothName 过滤蓝牙的前缀名称 会员卡："proximity", "iMEMBER"  基站："iStation"
      */
     @JvmOverloads
     fun scanDevices(
         scanTimeOut: Long = 5000,
-        vararg bluetoothName: String = arrayOf("proximity", "iMEMBER")
+        vararg bluetoothName: String = arrayOf("proximity", "iMEMBER", "iStation")
     ) {
         if (mScanTimeOut != scanTimeOut) {
             mScanTimeOut = scanTimeOut
@@ -85,14 +85,27 @@ class PadSdkHelper private constructor() {
      * 连接设备-检查设备连接,用户手动点击某个wifi进行连接
      */
     fun connect(bleDevice: BleDevice) {
-        val result = ParseHelper.instance.parseRecord(bleDevice.scanRecord)
-        result?.run {
-            when {
-                startsWith(AFTER_PAIRED) -> {
-                    connectionAndNotify(bleDevice, true)
-                }
-                else -> {
-                    connectionAndNotify(bleDevice, false)
+        var result = ParseHelper.instance.parseRecord(bleDevice.scanRecord)
+        result?.let {
+            result = it.substring(0, 2)
+            val content = it.subSequence(2, it.length)
+            result?.let { type ->
+                when {
+                    type.startsWith(I_STATION) -> {                                                 //  基站广播
+
+                    }
+                    type.startsWith(VIP_CARD) -> {                                                  //  vip卡广播
+                        content?.let { state ->
+                            when {
+                                state.startsWith(AFTER_PAIRED) -> {
+                                    connectionAndNotify(bleDevice, true)
+                                }
+                                else -> {
+                                    connectionAndNotify(bleDevice, false)
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -177,6 +190,7 @@ class PadSdkHelper private constructor() {
     fun disconnect(bleDevice: BleDevice?) {
         BleManager.getInstance().disconnect(bleDevice)
     }
+
     /**
      * 释放资源
      */

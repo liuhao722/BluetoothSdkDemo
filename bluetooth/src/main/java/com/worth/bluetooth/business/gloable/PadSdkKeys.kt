@@ -9,6 +9,9 @@ import com.clj.fastble.utils.HexUtil.*
  * Description: This is PadSdkKeys
  */
 
+const val I_STATION = "af"                                                                          //  基站的广播
+const val VIP_CARD = "0f"                                                                           //  VIP卡的广播
+
 const val UNPAIRED = "038011bb"                                                                     //  未配对
 const val AFTER_PAIRED = "018011bb"                                                                 //  成功配对后的广播
 const val LONG_PRESS = "0b8011bb"                                                                   //  长按10秒广播
