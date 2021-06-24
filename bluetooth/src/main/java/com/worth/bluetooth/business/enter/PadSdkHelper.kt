@@ -43,7 +43,7 @@ class PadSdkHelper private constructor() {
     private var conn = false                        //  当前的链接状态
     private var currGatt: BluetoothGatt? = null     //  当前的蓝牙特征
     private var isAlwaysScan = true                 //  是否是一直扫描
-
+    private var isScanned = false                    //  是否手动触发扫描过
     /**
      * 初始化sdk
      * @param reConnectCount            重连次数
@@ -82,6 +82,7 @@ class PadSdkHelper private constructor() {
         scanTimeOut: Long = 5000,
         vararg bluetoothName: String = arrayOf("proximity", "iMEMBER", "iStation")
     ) {
+        isScanned = true
         mScanTimeOut = scanTimeOut
         initScanRule(scanTimeOut, *bluetoothName)
         scan()
@@ -209,7 +210,9 @@ class PadSdkHelper private constructor() {
      * 释放资源
      */
     fun release() {
-        cancelScan()
+        if (isScanned){
+            cancelScan()
+        }
         disconnectAllDevice()
         BleManager.getInstance().destroy()
         EspHelper.release()
