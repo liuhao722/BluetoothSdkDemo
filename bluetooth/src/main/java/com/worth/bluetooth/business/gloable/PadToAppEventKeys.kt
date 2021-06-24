@@ -29,6 +29,7 @@ const val CLICK = 0x20_000_301                                                  
 const val DOUBLE_CLICK = 0x20_000_302                                                               //  双击
 
 const val STATION_RESULT = 0x20_000_400                                                             //  基站返回的数据
+const val WIFI_INFO = 0x20_000_401                                                                  //  wifi返回的信息
 
 
 

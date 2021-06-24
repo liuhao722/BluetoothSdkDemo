@@ -24,6 +24,9 @@ import com.espressif.iot.esptouch.bean.StateResult
 import com.espressif.iot.esptouch.util.ByteUtil
 import com.espressif.iot.esptouch.util.TouchNetUtil
 import com.worth.bluetooth.R
+import com.worth.bluetooth.business.gloable.EVENT_TO_APP
+import com.worth.bluetooth.business.gloable.WIFI_INFO
+import com.worth.framework.base.core.utils.LDBus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -39,13 +42,11 @@ object EspHelper {
     private var mSsid = ""
     private var mBssid = ""
     private var mSsidBytes: ByteArray = byteArrayOf()
-    private var stateResult: StateResult? = null
 
     private var mTask: EsptouchTask? = null
     private var mWifiManager: WifiManager? = null
     private lateinit var mContext: Application
     private var mBroadcastData: MutableLiveData<String>? = null
-
     private val mReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             val action = intent.action ?: return
@@ -84,13 +85,11 @@ object EspHelper {
      */
     @JvmOverloads
     fun executeBroadcast(
-        callbackWifiInfo: (StateResult?) -> Unit,
         callbackBroadcast: (List<IEsptouchResult>?) -> Unit,
         wifiPassword: String,
         deviceCount: Int = 1,
         isBroadcast: Boolean = true
     ) {
-        callbackWifiInfo.invoke(stateResult)
         GlobalScope.launch(Dispatchers.IO) {
             val ssid = if (mSsidBytes == null) ByteUtil.getBytesByString(mSsid) else mSsidBytes
             val password = if (wifiPassword == null) null else ByteUtil.getBytesByString(
@@ -119,7 +118,7 @@ object EspHelper {
     }
 
     private fun onWifiChanged() {
-        stateResult = check()
+        val stateResult = check()
         stateResult?.let {
             mSsid = it.ssid
             mSsidBytes = it.ssidBytes
@@ -133,6 +132,7 @@ object EspHelper {
             } else {
                 cancel()
             }
+            LDBus.sendSpecial2(EVENT_TO_APP, WIFI_INFO, it)               //  返回给app 状态信息2byte 产品id2byte mac地址6byte
         }
     }
 

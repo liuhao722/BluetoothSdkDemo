@@ -48,6 +48,7 @@ import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.SCAN_FINI
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.START_CONN;
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.START_SCAN;
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.STATION_RESULT;
+import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.WIFI_INFO;
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.WRITE_FAIL;
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.WRITE_OK;
 
@@ -71,8 +72,8 @@ public class MainActivity extends AppCompatActivity {
         initPermission();       //  初始化依赖的权限
         initView();
         initListener();
-        initSdk();              //  初始化sdk
         initObserver();         //  监听sdk错误的返回
+        initSdk();              //  初始化sdk
     }
 
     private void initSdk() {
@@ -142,20 +143,7 @@ public class MainActivity extends AppCompatActivity {
                 toastLoading.setGravity(Gravity.CENTER, 0, 300);
                 toastLoading.show();
 
-                EspHelper.INSTANCE.executeBroadcast(wifiInfo -> {   //  获取到的wifi信息
-                    if (wifiInfo != null) {
-                        String mSsidByte = new String(wifiInfo.ssidBytes);
-                        String info = "\t wifi名称:" + wifiInfo.ssid
-                                + "\t wifi名称对应的byte，解析后:" + mSsidByte
-                                + "\t wifi的mac地址:" + wifiInfo.bssid
-                                + "\t message:" + wifiInfo.message
-                                + "\t is5G:" + wifiInfo.is5G
-                                + "\t address:" + wifiInfo.address
-                                + "\t wifiConnected:" + wifiInfo.wifiConnected;
-                        tvWifiInfo.setText(info);
-                    }
-                    return null;
-                }, list -> {        //  获取到广播到的设备连接信息
+                EspHelper.INSTANCE.executeBroadcast(list -> {        //  获取到广播到的设备连接信息
                     // 此时可以loading销毁--自行替换就可以了
                     Toast toastDismiss = Toast.makeText(MainActivity.this, "此时可以结束loading", Toast.LENGTH_LONG);
                     toastDismiss.setGravity(Gravity.CENTER, 0, 400);
@@ -204,6 +192,20 @@ public class MainActivity extends AppCompatActivity {
                             Log.e(TAG, "状态信息--->2位：" + state);
                             Log.e(TAG, "产品Id--->2位：" + productId);
                             Log.e(TAG, "macId--->6位：" + macId);
+                        }
+                        break;
+                    case WIFI_INFO:
+                        if (objectParams != null && objectParams instanceof StateResult) {
+                            StateResult wifiInfo = (StateResult) objectParams;
+                            String mSsidByte = new String(wifiInfo.ssidBytes);
+                            String info = "\t wifi名称:" + wifiInfo.ssid
+                                    + "\t wifi名称对应的byte，解析后:" + mSsidByte
+                                    + "\t wifi的mac地址:" + wifiInfo.bssid
+                                    + "\t message:" + wifiInfo.message
+                                    + "\t is5G:" + wifiInfo.is5G
+                                    + "\t address:" + wifiInfo.address
+                                    + "\t wifiConnected:" + wifiInfo.wifiConnected;
+                            tvWifiInfo.setText(info);
                         }
                         break;
                     case START_SCAN:                                                                //  开始扫描-做上次扫描数据清理工作
