@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
@@ -60,7 +61,8 @@ public class MainActivity extends AppCompatActivity {
     private boolean scan = true;
 
     private Button search, conn, disConn, led, wifi;
-    private EditText et1, et2;
+    private EditText et1, et2, et3;
+    private TextView tvWifiInfo;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,15 +74,20 @@ public class MainActivity extends AppCompatActivity {
         initSdk();              //  初始化sdk
         initObserver();         //  监听sdk错误的返回
     }
+    private void initSdk() {
+        padSdkHelper = PadSdkHelper.Companion.getInstance().initPadSdk();
+    }
 
     private void initView() {
-        search = findViewById(R.id.btn_search);
+        tvWifiInfo = findViewById(R.id.tv_wifi_info);
         et1 = findViewById(R.id.et_count);
         et2 = findViewById(R.id.et_interval);
-        conn = findViewById(R.id.btn_conn);
-        disConn = findViewById(R.id.btn_dis_conn);
-        led = findViewById(R.id.btn_control_led);
+        et3 = findViewById(R.id.et_wifi_password);
         wifi = findViewById(R.id.btn_wifi);
+        conn = findViewById(R.id.btn_conn);
+        search = findViewById(R.id.btn_search);
+        led = findViewById(R.id.btn_control_led);
+        disConn = findViewById(R.id.btn_dis_conn);
     }
 
     private void initListener() {
@@ -102,77 +109,78 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        conn.setOnClickListener(v -> {
+        conn.setOnClickListener(v -> {      //  连接
             if (mBleDevice != null) {
                 padSdkHelper.connect(mBleDevice);
             }
         });
 
-        disConn.setOnClickListener(v -> {
+        disConn.setOnClickListener(v -> {   //  断链
             if (mBleDevice != null) {
                 padSdkHelper.disconnect(mBleDevice);
             }
         });
 
-        led.setOnClickListener(v -> {
+        led.setOnClickListener(v -> {       //  控制led闪烁 可以输入次数和频率间隔
             if (mBleDevice != null) {
                 int count = et1.getText().toString().isEmpty() ? 0 : Integer.parseInt(et1.getText().toString());
                 int interval = et2.getText().toString().isEmpty() ? 0 : Integer.parseInt(et2.getText().toString());
                 padSdkHelper.controlLed(mBleDevice, count, interval);
             }
         });
+
         wifi.setOnClickListener(v -> {
             // 此时可以loading展示--自行替换就可以了
             Toast toastLoading = Toast.makeText(this, "此时可以loading展示", Toast.LENGTH_LONG);
             toastLoading.setGravity(Gravity.CENTER, 0, 0);
             toastLoading.show();
+            String password = et3.getText().toString().trim();
+            if (!TextUtils.isEmpty(password)) {
+                EspHelper.INSTANCE.executeBroadcast(wifiInfo -> {   //  获取到的wifi信息
+                    if (wifiInfo != null) {
+                        String mSsidByte = new String(wifiInfo.ssidBytes);
+                        String info = "\t wifi名称:" + wifiInfo.ssid
+                                + "\t wifi名称对应的byte，解析后:" + mSsidByte
+                                + "\t wifi的mac地址:" + wifiInfo.bssid
+                                + "\t message:" + wifiInfo.message
+                                + "\t is5G:" + wifiInfo.is5G
+                                + "\t address:" + wifiInfo.address
+                                + "\t wifiConnected:" + wifiInfo.wifiConnected;
+                        tvWifiInfo.setText(info);
+                    }
+                    return null;
+                }, list -> {        //  获取到广播到的设备连接信息
+                    // 此时可以loading销毁--自行替换就可以了
+                    Toast toastDismiss = Toast.makeText(MainActivity.this, "此时可以结束loading", Toast.LENGTH_LONG);
+                    toastDismiss.setGravity(Gravity.CENTER, 0, 0);
+                    toastDismiss.show();
 
-            EspHelper.INSTANCE.executeBroadcast(wifiInfo -> {
-                if (wifiInfo != null) {
-                    String mSsidByte = new String(wifiInfo.ssidBytes);
-                    Log.e("info-onWifiChanged:",
-                            "\t wifi名称:" + wifiInfo.ssid
-                                    + "\t wifi名称对应的byte，解析后:" + mSsidByte
-                                    + "\t wifi的mac地址:" + wifiInfo.bssid
-                                    + "\t message:" + wifiInfo.message
-                                    + "\t is5G:" + wifiInfo.is5G
-                                    + "\t address:" + wifiInfo.address
-                                    + "\t wifiConnected:" + wifiInfo.wifiConnected
-                    );
-                }
-                return null;
-            }, list -> {
-                // 此时可以loading销毁--自行替换就可以了
-                Toast toastDismiss = Toast.makeText(MainActivity.this, "此时可以结束loading", Toast.LENGTH_LONG);
-                toastDismiss.setGravity(Gravity.CENTER, 0, 0);
-                toastDismiss.show();
+                    if (list == null) {
+                        Log.e(TAG, "list == null");
+                    } else {
+                        for (IEsptouchResult item : list) {
+                            if (item != null) {
+                                Log.e(TAG, "\t getBssid:" + item.getBssid()   //  设备的mac地址
+                                        + "\t isSuc:" + item.isSuc()                //  任务是否执行成功
+                                        + "\t isCancelled:" + item.isCancelled()    //  是否被用户手动取消了
+                                );
 
-                if (list == null) {
-                    Log.e("info-activity", "list == null");
-                } else {
-                    for (IEsptouchResult item : list) {
-                        if (item != null) {
-                            Log.e("info-activity",
-                                    "\t getBssid:" + item.getBssid()
-                                            + "\t isSuc:" + item.isSuc()
-                                            + "\t isCancelled:" + item.isCancelled()
-                            );
-                            InetAddress addr = item.getInetAddress();
-                            if (addr != null) {
-                                Log.e("info-activity", "getInetAddress:" + addr.toString());
-                            } else {
-                                Log.e("info-activity", "getInetAddress: == null");
+                                //  ip地址--InetAddress里面还有很多信息，可以debug或者打印出来，看需要什么不？
+                                InetAddress addr = item.getInetAddress();
+                                if (addr != null) {
+                                    Log.e(TAG, "getInetAddress:" + addr.toString());
+                                } else {
+                                    Log.e(TAG, "getInetAddress: == null");
+                                }
                             }
                         }
                     }
-                }
-                return null;
-            }, "liukun722914");
+                    return null;
+                }, password);
+            } else {
+                Toast.makeText(MainActivity.this, "wifi密码不为空", Toast.LENGTH_SHORT).show();
+            }
         });
-    }
-
-    private void initSdk() {
-        padSdkHelper = PadSdkHelper.Companion.getInstance().initPadSdk();
     }
 
     private void initObserver() {
