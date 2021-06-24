@@ -22,7 +22,7 @@ class ParseHelper private constructor() {
     /**
      * 解析对应的状态，进行设备信息的确定
      */
-    fun parseRecord(scanRecord: ByteArray): String? {
+    internal fun parseRecord(scanRecord: ByteArray): String? {
         val temp = ByteArray(11)
         temp[0] = scanRecord[5]             //  包头信息-区分是蓝牙还是基站
 
@@ -52,7 +52,7 @@ class ParseHelper private constructor() {
     /**
      * 读写的服务
      */
-    fun findService(gatt: BluetoothGatt): BluetoothGattService? {
+    internal fun findService(gatt: BluetoothGatt): BluetoothGattService? {
         return gatt.services?.find {
             it?.uuid.toString().startsWith(TO_PAIRED_START_KEY)
         }
@@ -61,7 +61,7 @@ class ParseHelper private constructor() {
     /**
      * 读写通知的具体的特征
      */
-    fun findCharacteristic(service: BluetoothGattService?): BluetoothGattCharacteristic? {
+    internal fun findCharacteristic(service: BluetoothGattService?): BluetoothGattCharacteristic? {
         return service?.characteristics?.find {
             it?.uuid.toString().startsWith(TO_PAIRED_START_KEY1)
         }
@@ -72,7 +72,7 @@ class ParseHelper private constructor() {
      * @param count 要设置闪烁的次数
      * @param intervalTime  要设置闪烁每次的时间  毫秒级 比如1000毫秒
      */
-    fun setFlashInfo(count: Int = 3, intervalTime: Int = 1000): ByteArray {
+    internal fun setFlashInfo(count: Int = 3, intervalTime: Int = 1000): ByteArray {
         var time1 = 1000
         var time2 = 6000
         return if (intervalTime * count * 2 > 65535) {
@@ -114,7 +114,7 @@ class ParseHelper private constructor() {
     /**
      * 扫描结果发现是长按的事件且未连接该设备
      */
-    fun checkDeviceList(devices: List<BleDevice>): List<BleDevice> {
+    internal fun checkDeviceList(devices: List<BleDevice>): List<BleDevice> {
         return devices?.filter { device ->
             var find = false
             var result = parseRecord(device.scanRecord)
@@ -195,6 +195,45 @@ class ParseHelper private constructor() {
     }
 
     /**
+     * 获取是否可被连接或配对
+     */
+    fun isCanConnectionOrPair(scanRecordStr: String?): Boolean {
+        scanRecordStr?.run {
+            var numB = hexToB(substring(0, 2))  //  得到二进制的数据
+            val result1 = "${numB[0]}"
+            return numB[0].equals("1")
+        }
+        return false
+    }
+
+    /**
+     * 是否是出厂状态 未配对
+     * @return true为未配对 出厂状态
+     *          false 为已配对
+     */
+    fun isFactoryState(scanRecordStr: String?): Boolean {
+        scanRecordStr?.run {
+            var numB = hexToB(substring(0, 2))  //  得到二进制的数据
+            val result1 = "${numB[1]}"
+            return numB[0].equals("1")
+        }
+        return false
+    }
+    /**
+     * 是否包含event
+     * @return true为包含
+     *          false 为不包含
+     */
+    fun isContainEvent(scanRecordStr: String?): Boolean {
+        scanRecordStr?.run {
+            var numB = hexToB(substring(0, 2))  //  得到二进制的数据
+            val result1 = "${numB[2]}"
+            return numB[0].equals("1")
+        }
+        return false
+    }
+
+    /**
      * 十六进制转换成二进制
      */
     private fun hexToB(num: String): String {
@@ -202,7 +241,7 @@ class ParseHelper private constructor() {
 //        println("十六进制：$num = 十进制$i10")
         var s2 = Integer.toBinaryString(i10)
 //        println("十进制$i10 = 二进制：$s2 ")
-        while (s2.length < 8){
+        while (s2.length < 8) {
             s2 = "0$s2"
         }
         println("二进制：$s2 ")

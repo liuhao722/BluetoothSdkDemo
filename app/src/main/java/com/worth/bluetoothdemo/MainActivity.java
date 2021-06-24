@@ -31,9 +31,6 @@ import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 
-import kotlin.Unit;
-import kotlin.jvm.functions.Function1;
-
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.CLICK;
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.CONN_FAIL;
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.CONN_OK;
@@ -190,10 +187,16 @@ public class MainActivity extends AppCompatActivity {
                             String productId = ParseHelper.Companion.getInstance().getProductId(objectParams.toString());
                             String macId = ParseHelper.Companion.getInstance().getMacId(objectParams.toString());
                             String versionCode = ParseHelper.Companion.getInstance().getVersionCode(objectParams.toString());
+                            boolean isCanConnectionOrPair = ParseHelper.Companion.getInstance().isCanConnectionOrPair(objectParams.toString());
+                            boolean isFactoryState = ParseHelper.Companion.getInstance().isFactoryState(objectParams.toString());
+                            boolean isContainEvent = ParseHelper.Companion.getInstance().isContainEvent(objectParams.toString());
                             Log.e(TAG, "状态信息--->2位：" + state);
                             Log.e(TAG, "产品Id--->2位：" + productId);
                             Log.e(TAG, "macId--->6位：" + macId);
                             Log.e(TAG, "版本号--->最大7.15：" + versionCode);
+                            Log.e(TAG, "是否能被连接或配对--->：" + isCanConnectionOrPair);
+                            Log.e(TAG, "是否是出厂状态，未配对--->：" + isFactoryState);
+                            Log.e(TAG, "是否包含Event--->：" + isContainEvent);
                         }
                         break;
                     case WIFI_INFO:
