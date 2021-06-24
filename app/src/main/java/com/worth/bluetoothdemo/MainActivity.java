@@ -129,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
                             String macId = ParseHelper.Companion.getInstance().getMacId(objectParams.toString());
                             Log.e(TAG, "状态信息--->2位：" + state);
                             Log.e(TAG, "产品Id--->2位：" + productId);
-                            Log.e(TAG, "macId--->2位：" + state);
+                            Log.e(TAG, "macId--->6位：" + macId);
                         }
                         break;
                     case START_SCAN:                                                                //  开始扫描-做上次扫描数据清理工作

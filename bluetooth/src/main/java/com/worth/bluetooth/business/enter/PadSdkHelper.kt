@@ -41,19 +41,23 @@ class PadSdkHelper private constructor() {
 
     private var conn = false                        //  当前的链接状态
     private var currGatt: BluetoothGatt? = null     //  当前的蓝牙特征
-
+    private var isAlwaysScan = true                 //  是否是一直扫描
     /**
      * 初始化sdk
      * @param reConnectCount            重连次数
      * @param reConnectCountInterval    重连时间间隔
      * @param connectOverTime           链接超时时间
+     * @param alwaysScan                是否是一直扫描~false：默认不一直扫描,连接成功后就不再扫描了
+     *                                                true：连接成功后也一直扫描，对应还要扫描基站因为
      */
     @JvmOverloads
     fun initPadSdk(
         reConnectCount: Int = 1,
         reConnectCountInterval: Long = 5000,
-        connectOverTime: Long = 20000
+        connectOverTime: Long = 20000,
+        alwaysScan: Boolean = true
     ): PadSdkHelper {
+        isAlwaysScan = alwaysScan
         BleManager.getInstance().init(context)
         BleManager.getInstance()
             .enableLog(true)
@@ -90,7 +94,10 @@ class PadSdkHelper private constructor() {
             val content = it.subSequence(2, it.length)
             result?.let { type ->
                 when {
-                    type.startsWith(I_STATION, true) -> {                               //  基站广播-返回的设备列表不会显示基站信息，暂时留此处做备用
+                    type.startsWith(
+                        I_STATION,
+                        true
+                    ) -> {                               //  基站广播-返回的设备列表不会显示基站信息，暂时留此处做备用
 
                     }
                     type.startsWith(VIP_CARD, true) -> {                                //  vip卡广播
@@ -221,7 +228,9 @@ class PadSdkHelper private constructor() {
         if (BleManager.getInstance().isConnected(bd)) return
         BleManager.getInstance().connect(bd, object : BleGattCallback() {
             override fun onStartConnect() {
-                cancelScan()
+                if (!isAlwaysScan){
+                    cancelScan()
+                }
                 conn = false
                 LDBus.sendSpecial2(EVENT_TO_APP, START_CONN, bd)
             }
@@ -233,7 +242,9 @@ class PadSdkHelper private constructor() {
             }
 
             override fun onConnectSuccess(bd: BleDevice, gatt: BluetoothGatt, status: Int) {
-                cancelScan()
+                if (!isAlwaysScan){
+                    cancelScan()
+                }
                 conn = true
                 currGatt = gatt
                 LDBus.sendSpecial2(EVENT_TO_APP, CONN_OK, gatt)
@@ -287,7 +298,11 @@ class PadSdkHelper private constructor() {
                 LDBus.sendSpecial2(EVENT_TO_APP, SCAN_FINISH, mutableListOf<BleDevice>())
             }
 
-            if (!conn) {
+            if (!isAlwaysScan){
+                if (!conn) {
+                    scanDevices()
+                }
+            }else{
                 scanDevices()
             }
         }
