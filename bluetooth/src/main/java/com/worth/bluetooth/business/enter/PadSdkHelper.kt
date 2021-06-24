@@ -16,6 +16,7 @@ import com.clj.fastble.data.BleDevice
 import com.clj.fastble.exception.BleException
 import com.clj.fastble.scan.BleScanRuleConfig
 import com.clj.fastble.utils.HexUtil
+import com.espressif.iot.esptouch.EspHelper
 import com.worth.bluetooth.business.ext.setConnMacId
 import com.worth.bluetooth.business.ext.setMacId
 import com.worth.bluetooth.business.gloable.*
@@ -42,6 +43,7 @@ class PadSdkHelper private constructor() {
     private var conn = false                        //  当前的链接状态
     private var currGatt: BluetoothGatt? = null     //  当前的蓝牙特征
     private var isAlwaysScan = true                 //  是否是一直扫描
+
     /**
      * 初始化sdk
      * @param reConnectCount            重连次数
@@ -58,7 +60,10 @@ class PadSdkHelper private constructor() {
         alwaysScan: Boolean = true
     ): PadSdkHelper {
         isAlwaysScan = alwaysScan
-        BleManager.getInstance().init(context)
+        context?.let {
+            BleManager.getInstance().init(it)
+            EspHelper.initSdk(it)
+        }
         BleManager.getInstance()
             .enableLog(true)
             .setReConnectCount(reConnectCount, reConnectCountInterval)
@@ -204,6 +209,7 @@ class PadSdkHelper private constructor() {
         cancelScan()
         disconnectAllDevice()
         BleManager.getInstance().destroy()
+        EspHelper.release()
     }
 
     /**
@@ -228,7 +234,7 @@ class PadSdkHelper private constructor() {
         if (BleManager.getInstance().isConnected(bd)) return
         BleManager.getInstance().connect(bd, object : BleGattCallback() {
             override fun onStartConnect() {
-                if (!isAlwaysScan){
+                if (!isAlwaysScan) {
                     cancelScan()
                 }
                 conn = false
@@ -242,7 +248,7 @@ class PadSdkHelper private constructor() {
             }
 
             override fun onConnectSuccess(bd: BleDevice, gatt: BluetoothGatt, status: Int) {
-                if (!isAlwaysScan){
+                if (!isAlwaysScan) {
                     cancelScan()
                 }
                 conn = true
@@ -298,11 +304,11 @@ class PadSdkHelper private constructor() {
                 LDBus.sendSpecial2(EVENT_TO_APP, SCAN_FINISH, mutableListOf<BleDevice>())
             }
 
-            if (!isAlwaysScan){
+            if (!isAlwaysScan) {
                 if (!conn) {
                     scanDevices()
                 }
-            }else{
+            } else {
                 scanDevices()
             }
         }

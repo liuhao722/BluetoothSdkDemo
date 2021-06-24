@@ -3,8 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#50f0"
     android:animateLayoutChanges="true"
+    android:background="#50f0"
     android:orientation="vertical">
 
     <Button
@@ -83,5 +83,27 @@
         android:textSize="10sp"
         android:visibility="gone"
         tools:visibility="visible" />
+
+    <EditText
+        android:id="@+id/et_wifi_password"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="24dp"
+        android:layout_marginRight="24dp"
+        android:hint="输入当前连接wifi的密码"
+        android:inputType="number"
+        android:visibility="gone"
+        tools:visibility="visible" />
+
+    <Button
+        android:id="@+id/btn_wifi"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginLeft="24dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginRight="24dp"
+        android:text="获取wifi信息"
+        android:textSize="10sp"
+        android:visibility="visible" />
 
 </LinearLayout>

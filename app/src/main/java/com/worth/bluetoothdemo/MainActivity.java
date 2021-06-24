@@ -7,22 +7,31 @@ import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.clj.fastble.data.BleDevice;
+import com.espressif.iot.esptouch.EspHelper;
+import com.espressif.iot.esptouch.IEsptouchResult;
+import com.espressif.iot.esptouch.bean.StateResult;
 import com.worth.bluetooth.business.enter.PadSdkHelper;
 import com.worth.bluetooth.business.utils.ParseHelper;
 import com.worth.framework.base.core.utils.LDBus;
 
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
+
+import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
 
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.CLICK;
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.CONN_FAIL;
@@ -50,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
     private BleDevice mBleDevice;
     private boolean scan = true;
 
-    private Button search, conn, disConn, led;
+    private Button search, conn, disConn, led, wifi;
     private EditText et1, et2;
 
     @Override
@@ -71,6 +80,7 @@ public class MainActivity extends AppCompatActivity {
         conn = findViewById(R.id.btn_conn);
         disConn = findViewById(R.id.btn_dis_conn);
         led = findViewById(R.id.btn_control_led);
+        wifi = findViewById(R.id.btn_wifi);
     }
 
     private void initListener() {
@@ -110,6 +120,54 @@ public class MainActivity extends AppCompatActivity {
                 int interval = et2.getText().toString().isEmpty() ? 0 : Integer.parseInt(et2.getText().toString());
                 padSdkHelper.controlLed(mBleDevice, count, interval);
             }
+        });
+        wifi.setOnClickListener(v -> {
+            // 此时可以loading展示--自行替换就可以了
+            Toast toastLoading = Toast.makeText(this, "此时可以loading展示", Toast.LENGTH_LONG);
+            toastLoading.setGravity(Gravity.CENTER, 0, 0);
+            toastLoading.show();
+
+            EspHelper.INSTANCE.executeBroadcast(wifiInfo -> {
+                if (wifiInfo != null) {
+                    String mSsidByte = new String(wifiInfo.ssidBytes);
+                    Log.e("info-onWifiChanged:",
+                            "\t wifi名称:" + wifiInfo.ssid
+                                    + "\t wifi名称对应的byte，解析后:" + mSsidByte
+                                    + "\t wifi的mac地址:" + wifiInfo.bssid
+                                    + "\t message:" + wifiInfo.message
+                                    + "\t is5G:" + wifiInfo.is5G
+                                    + "\t address:" + wifiInfo.address
+                                    + "\t wifiConnected:" + wifiInfo.wifiConnected
+                    );
+                }
+                return null;
+            }, list -> {
+                // 此时可以loading销毁--自行替换就可以了
+                Toast toastDismiss = Toast.makeText(MainActivity.this, "此时可以结束loading", Toast.LENGTH_LONG);
+                toastDismiss.setGravity(Gravity.CENTER, 0, 0);
+                toastDismiss.show();
+
+                if (list == null) {
+                    Log.e("info-activity", "list == null");
+                } else {
+                    for (IEsptouchResult item : list) {
+                        if (item != null) {
+                            Log.e("info-activity",
+                                    "\t getBssid:" + item.getBssid()
+                                            + "\t isSuc:" + item.isSuc()
+                                            + "\t isCancelled:" + item.isCancelled()
+                            );
+                            InetAddress addr = item.getInetAddress();
+                            if (addr != null) {
+                                Log.e("info-activity", "getInetAddress:" + addr.toString());
+                            } else {
+                                Log.e("info-activity", "getInetAddress: == null");
+                            }
+                        }
+                    }
+                }
+                return null;
+            }, "liukun722914");
         });
     }
 
