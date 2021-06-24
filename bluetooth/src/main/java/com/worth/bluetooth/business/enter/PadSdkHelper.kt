@@ -82,10 +82,12 @@ class PadSdkHelper private constructor() {
         scanTimeOut: Long = 5000,
         vararg bluetoothName: String = arrayOf("proximity", "iMEMBER", "iStation")
     ) {
-        if (mScanTimeOut != scanTimeOut) {
-            mScanTimeOut = scanTimeOut
-            initScanRule(scanTimeOut, *bluetoothName)
-        }
+        mScanTimeOut = scanTimeOut
+        initScanRule(scanTimeOut, *bluetoothName)
+        scan()
+    }
+
+    internal fun scan() {
         BleManager.getInstance().scan(bleScanCallback)
     }
 
@@ -188,10 +190,11 @@ class PadSdkHelper private constructor() {
         get() = BleManager.getInstance().allConnectedDevice
 
     /**
-     * 取消扫描
+     * 取消扫描--但不能真正的停止 还需要扫描基站的广播！！！哎！！！
      * 如果调用该方法，如果还在扫描状态，则立即结束，并回调该onScanFinished方法。
      */
     fun cancelScan() {
+        initScanRule(mScanTimeOut, "iStation")
         BleManager.getInstance().cancelScan()
     }
 
@@ -242,7 +245,7 @@ class PadSdkHelper private constructor() {
             }
 
             override fun onConnectFail(bd: BleDevice, ex: BleException) {
-                scanDevices()
+                scan()
                 conn = false
                 LDBus.sendSpecial2(EVENT_TO_APP, CONN_FAIL, ex)
             }
@@ -277,7 +280,7 @@ class PadSdkHelper private constructor() {
             override fun onDisConnected(disC: Boolean, b: BleDevice, g: BluetoothGatt, s: Int) {
                 conn = false
                 Log.e(TAG, "当前设备已断开连接")
-                scanDevices()
+                scan()
                 LDBus.sendSpecial2(EVENT_TO_APP, DIS_CONN, g)
             }
         })
@@ -306,10 +309,10 @@ class PadSdkHelper private constructor() {
 
             if (!isAlwaysScan) {
                 if (!conn) {
-                    scanDevices()
+                    scan()
                 }
             } else {
-                scanDevices()
+                scan()
             }
         }
     }

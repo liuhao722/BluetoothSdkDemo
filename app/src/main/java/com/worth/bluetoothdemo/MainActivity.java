@@ -62,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
 
     private Button search, conn, disConn, led, wifi;
     private EditText et1, et2, et3;
-    private TextView tvWifiInfo;
+    private TextView tvWifiInfo, tvBluetoothList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,20 +74,25 @@ public class MainActivity extends AppCompatActivity {
         initSdk();              //  初始化sdk
         initObserver();         //  监听sdk错误的返回
     }
+
     private void initSdk() {
         padSdkHelper = PadSdkHelper.Companion.getInstance().initPadSdk();
     }
 
     private void initView() {
-        tvWifiInfo = findViewById(R.id.tv_wifi_info);
-        et1 = findViewById(R.id.et_count);
-        et2 = findViewById(R.id.et_interval);
-        et3 = findViewById(R.id.et_wifi_password);
+
         wifi = findViewById(R.id.btn_wifi);
         conn = findViewById(R.id.btn_conn);
         search = findViewById(R.id.btn_search);
         led = findViewById(R.id.btn_control_led);
         disConn = findViewById(R.id.btn_dis_conn);
+
+        et1 = findViewById(R.id.et_count);
+        et2 = findViewById(R.id.et_interval);
+        et3 = findViewById(R.id.et_wifi_password);
+
+        tvWifiInfo = findViewById(R.id.tv_wifi_info);
+        tvBluetoothList = findViewById(R.id.tv_result_list);
     }
 
     private void initListener() {
@@ -101,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
 //                    padSdkHelper.scanDevices(5000, "proximity", "iMEMBER");
 //                    padSdkHelper.scanDevices(5000, "proximity", "iMEMBER", "iStation");
                 } else {
-                    search.setText("开始扫描");
+                    search.setText("开始扫描蓝牙设备");
                     padSdkHelper.cancelScan();
                 }
 
@@ -130,12 +135,13 @@ public class MainActivity extends AppCompatActivity {
         });
 
         wifi.setOnClickListener(v -> {
-            // 此时可以loading展示--自行替换就可以了
-            Toast toastLoading = Toast.makeText(this, "此时可以loading展示", Toast.LENGTH_LONG);
-            toastLoading.setGravity(Gravity.CENTER, 0, 0);
-            toastLoading.show();
             String password = et3.getText().toString().trim();
             if (!TextUtils.isEmpty(password)) {
+                // 此时可以loading展示--自行替换就可以了
+                Toast toastLoading = Toast.makeText(this, "此时可以loading展示", Toast.LENGTH_LONG);
+                toastLoading.setGravity(Gravity.CENTER, 0, 300);
+                toastLoading.show();
+
                 EspHelper.INSTANCE.executeBroadcast(wifiInfo -> {   //  获取到的wifi信息
                     if (wifiInfo != null) {
                         String mSsidByte = new String(wifiInfo.ssidBytes);
@@ -152,7 +158,7 @@ public class MainActivity extends AppCompatActivity {
                 }, list -> {        //  获取到广播到的设备连接信息
                     // 此时可以loading销毁--自行替换就可以了
                     Toast toastDismiss = Toast.makeText(MainActivity.this, "此时可以结束loading", Toast.LENGTH_LONG);
-                    toastDismiss.setGravity(Gravity.CENTER, 0, 0);
+                    toastDismiss.setGravity(Gravity.CENTER, 0, 400);
                     toastDismiss.show();
 
                     if (list == null) {
@@ -178,7 +184,9 @@ public class MainActivity extends AppCompatActivity {
                     return null;
                 }, password);
             } else {
-                Toast.makeText(MainActivity.this, "wifi密码不为空", Toast.LENGTH_SHORT).show();
+                Toast toastTip = Toast.makeText(MainActivity.this, "wifi密码不可为空", Toast.LENGTH_LONG);
+                toastTip.setGravity(Gravity.CENTER, 0, 200);
+                toastTip.show();
             }
         });
     }
@@ -211,6 +219,8 @@ public class MainActivity extends AppCompatActivity {
                         if (objectParams != null) {
                             mScanResultList = (List<BleDevice>) objectParams;
                             showScanResult(mScanResultList);
+                        } else {
+                            showScanResult(null);
                         }
                         break;
 
@@ -279,8 +289,13 @@ public class MainActivity extends AppCompatActivity {
      * test在界面上展示扫描到符合规则的列表结果
      */
     private void showScanResult(List<BleDevice> list) {
-        TextView tv = findViewById(R.id.tv_result_list);
-        tv.setText(LogHelper.printAndShowScanResult(list));
+        if (list == null || list.size() == 0) {
+            tvBluetoothList.setVisibility(View.GONE);
+            tvBluetoothList.setText("");
+        } else {
+            tvBluetoothList.setVisibility(View.VISIBLE);
+            tvBluetoothList.setText(LogHelper.printAndShowScanResult(list));
+        }
     }
 
     /**
