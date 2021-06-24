@@ -72,7 +72,7 @@ class ParseHelper private constructor() {
      * @param count 要设置闪烁的次数
      * @param intervalTime  要设置闪烁每次的时间  毫秒级 比如1000毫秒
      */
-    fun setFlashInfo(count: Int = 3, intervalTime: Int = 1000): ByteArray{
+    fun setFlashInfo(count: Int = 3, intervalTime: Int = 1000): ByteArray {
         var time1 = 1000
         var time2 = 6000
         return if (intervalTime * count * 2 > 65535) {
@@ -86,7 +86,7 @@ class ParseHelper private constructor() {
         } else {
             var time1Str = Integer.toHexString(intervalTime)
             time1Str = mathResult(time1Str)
-            var time2Str = Integer.toHexString(intervalTime*count*2)
+            var time2Str = Integer.toHexString(intervalTime * count * 2)
             time2Str = mathResult(time2Str)
             HexUtil.hexStringToBytes("023004$time1Str$time2Str")
         }
@@ -125,7 +125,11 @@ class ParseHelper private constructor() {
                     when {
                         type.startsWith(I_STATION, true) -> {                           //  基站广播
                             find = false
-                            LDBus.sendSpecial2(EVENT_TO_APP, STATION_RESULT, content)               //  返回给app 状态信息2byte 产品id2byte mac地址6byte
+                            LDBus.sendSpecial2(
+                                EVENT_TO_APP,
+                                STATION_RESULT,
+                                content
+                            )               //  返回给app 状态信息2byte 产品id2byte mac地址6byte
                         }
                         type.startsWith(VIP_CARD, true) -> {                            //  vip卡广播
                             content?.run {
@@ -168,19 +172,57 @@ class ParseHelper private constructor() {
     /**
      * 获取状态信息
      */
-    fun getStateInfo(scanRecordStr:String?):String{
+    fun getStateInfo(scanRecordStr: String?): String {
         scanRecordStr?.run {
-            return substring(0, 2)
+            return substring(0, 4)
         }
         return ""
     }
 
     /**
+     * 获取版本号信息
+     */
+    fun getVersionCode(scanRecordStr: String?): String {
+        scanRecordStr?.run {
+            var numB = hexToB(substring(2, 4))  //  得到二进制的数据
+            val result1 = "${numB[1]}${numB[2]}${numB[3]}"
+            val result2 = "${numB[4]}${numB[5]}${numB[6]}${numB[7]}"
+            val result3 = bToInt(result1)
+            val result4 = bToInt(result2)
+            return "$result3.$result4"
+        }
+        return ""
+    }
+
+    /**
+     * 十六进制转换成二进制
+     */
+    private fun hexToB(num: String): String {
+        val i10 = Integer.parseInt(num, 16)
+//        println("十六进制：$num = 十进制$i10")
+        var s2 = Integer.toBinaryString(i10)
+//        println("十进制$i10 = 二进制：$s2 ")
+        while (s2.length < 8){
+            s2 = "0$s2"
+        }
+        println("二进制：$s2 ")
+        return s2
+    }
+
+    /**
+     * 二进制转换成十六进制
+     */
+    private fun bToInt(numB: String): Int {
+        return Integer.parseInt(numB, 2)
+    }
+
+
+    /**
      * 获取产品id
      */
-    fun getProductId(scanRecordStr:String?):String{
+    fun getProductId(scanRecordStr: String?): String {
         scanRecordStr?.run {
-            return substring(2, 4)
+            return substring(4, 8)
         }
         return ""
     }
@@ -188,9 +230,9 @@ class ParseHelper private constructor() {
     /**
      * 获取mac地址
      */
-    fun getMacId(scanRecordStr:String?):String{
+    fun getMacId(scanRecordStr: String?): String {
         scanRecordStr?.run {
-            return substring(4, 10)
+            return substring(8, 20)
         }
         return ""
     }

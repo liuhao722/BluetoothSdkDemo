@@ -189,9 +189,11 @@ public class MainActivity extends AppCompatActivity {
                             String state = ParseHelper.Companion.getInstance().getStateInfo(objectParams.toString());
                             String productId = ParseHelper.Companion.getInstance().getProductId(objectParams.toString());
                             String macId = ParseHelper.Companion.getInstance().getMacId(objectParams.toString());
+                            String versionCode = ParseHelper.Companion.getInstance().getVersionCode(objectParams.toString());
                             Log.e(TAG, "状态信息--->2位：" + state);
                             Log.e(TAG, "产品Id--->2位：" + productId);
                             Log.e(TAG, "macId--->6位：" + macId);
+                            Log.e(TAG, "版本号--->最大7.15：" + versionCode);
                         }
                         break;
                     case WIFI_INFO:
