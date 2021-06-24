@@ -46,13 +46,12 @@ object EspHelper {
     private var mTask: EsptouchTask? = null
     private var mWifiManager: WifiManager? = null
     private lateinit var mContext: Application
-    private var mBroadcastData: MutableLiveData<String>? = null
     private val mReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             val action = intent.action ?: return
             when (action) {
                 NETWORK_STATE_CHANGED_ACTION, PROVIDERS_CHANGED_ACTION -> {
-                    mBroadcastData?.setValue(action)
+                    onWifiChanged()
                 }
             }
         }
@@ -67,7 +66,6 @@ object EspHelper {
         mWifiManager = context.getSystemService(Context.WIFI_SERVICE) as WifiManager
         onWifiChanged()
         //  基站wifi部分
-        mBroadcastData = MutableLiveData<String>()
         val filter = IntentFilter(NETWORK_STATE_CHANGED_ACTION)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             filter.addAction(PROVIDERS_CHANGED_ACTION)
