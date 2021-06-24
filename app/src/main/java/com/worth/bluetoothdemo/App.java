@@ -12,9 +12,11 @@ import com.worth.framework.base.core.helper.SdkCoreHelper;
  * Description: This is App
  */
 public class App extends Application {
+    public static Application context;
     @Override
     public void onCreate() {
         super.onCreate();
+        context = this;
         SdkCoreHelper.Companion.getInstance().initCore(this, true);
     }
 }

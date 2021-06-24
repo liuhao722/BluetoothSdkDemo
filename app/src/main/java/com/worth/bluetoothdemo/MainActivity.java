@@ -8,12 +8,10 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -66,11 +64,11 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        initPermission();       //  初始化依赖的权限
+        initPermission();                               //  初始化依赖的权限
         initView();
         initListener();
-        initObserver();         //  监听sdk错误的返回
-        initSdk();              //  初始化sdk
+        initObserver();                                 //  监听sdk错误的返回
+        initSdk();                                      //  初始化sdk
     }
 
     private void initSdk() {
@@ -97,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
         search.setOnClickListener(v -> {
             checkBluetooth();
             if (checkGPSIsOpen()) {
-                if (scan) {      //  名称过滤只是第一步，决定返回与否蓝牙设备信息还是由广播解析出来的字段决定的
+                if (scan) {                             //  名称过滤只是第一步，决定返回与否蓝牙设备信息还是由广播解析出来的字段决定的
                     search.setText("取消扫描");
                     padSdkHelper.scanDevices(5000);
 //                    padSdkHelper.scanDevices(5000, "proximity");
@@ -112,19 +110,19 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        conn.setOnClickListener(v -> {      //  连接
+        conn.setOnClickListener(v -> {                  //  连接
             if (mBleDevice != null) {
                 padSdkHelper.connect(mBleDevice);
             }
         });
 
-        disConn.setOnClickListener(v -> {   //  断链
+        disConn.setOnClickListener(v -> {               //  断链
             if (mBleDevice != null) {
                 padSdkHelper.disconnect(mBleDevice);
             }
         });
 
-        led.setOnClickListener(v -> {       //  控制led闪烁 可以输入次数和频率间隔
+        led.setOnClickListener(v -> {                   //  控制led闪烁 可以输入次数和频率间隔
             if (mBleDevice != null) {
                 int count = et1.getText().toString().isEmpty() ? 0 : Integer.parseInt(et1.getText().toString());
                 int interval = et2.getText().toString().isEmpty() ? 0 : Integer.parseInt(et2.getText().toString());
@@ -136,15 +134,11 @@ public class MainActivity extends AppCompatActivity {
             String password = et3.getText().toString().trim();
             if (!TextUtils.isEmpty(password)) {
                 // 此时可以loading展示--自行替换就可以了
-                Toast toastLoading = Toast.makeText(this, "此时可以loading展示", Toast.LENGTH_LONG);
-                toastLoading.setGravity(Gravity.CENTER, 0, 300);
-                toastLoading.show();
+                LogHelper.toast("此时可以loading展示", 300);
 
                 EspHelper.INSTANCE.executeBroadcast(list -> {        //  获取到广播到的设备连接信息
                     // 此时可以loading销毁--自行替换就可以了
-                    Toast toastDismiss = Toast.makeText(MainActivity.this, "此时可以结束loading", Toast.LENGTH_LONG);
-                    toastDismiss.setGravity(Gravity.CENTER, 0, 400);
-                    toastDismiss.show();
+                    LogHelper.toast("此时可以结束loading", 400);
 
                     if (list == null) {
                         Log.e(TAG, "list == null");
@@ -157,11 +151,11 @@ public class MainActivity extends AppCompatActivity {
                                 );
 
                                 //  ip地址--InetAddress里面还有很多信息，可以debug或者打印出来，看需要什么不？
-                                InetAddress addr = item.getInetAddress();
-                                if (addr != null) {
-                                    Log.e(TAG, "getInetAddress:" + addr.toString());
+                                InetAddress address = item.getInetAddress();
+                                if (address != null) {
+                                    Log.e(TAG, "address:" + address.toString());
                                 } else {
-                                    Log.e(TAG, "getInetAddress: == null");
+                                    Log.e(TAG, "address: == null");
                                 }
                             }
                         }
@@ -169,9 +163,7 @@ public class MainActivity extends AppCompatActivity {
                     return null;
                 }, password);
             } else {
-                Toast toastTip = Toast.makeText(MainActivity.this, "wifi密码不可为空", Toast.LENGTH_LONG);
-                toastTip.setGravity(Gravity.CENTER, 0, 200);
-                toastTip.show();
+                LogHelper.toast("wifi密码不可为空", 200);
             }
         });
     }
@@ -311,13 +303,13 @@ public class MainActivity extends AppCompatActivity {
     private void checkBluetooth() {
         BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (!bluetoothAdapter.isEnabled()) {
-//            Toast.makeText(this, "蓝牙处于关闭状态，请打开蓝牙", Toast.LENGTH_LONG).show();
+            LogHelper.toast("蓝牙处于关闭状态，请打开蓝牙", 300);
             padSdkHelper.onOrOffBlueTooth(true);
             return;
         }
     }
 
-    /**
+    /***********************************************************************************************
      * android 6.0 以上需要动态申请权限
      * <!--    蓝牙所需权限，可能扫描时候还需要一个位置-->
      * <uses-permission android:name="android.permission.BLUETOOTH" />
@@ -335,7 +327,7 @@ public class MainActivity extends AppCompatActivity {
      * <uses-permission android:name="android.permission.INTERNET" />
      * <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
      * <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-     */
+     **********************************************************************************************/
     private void initPermission() {
         String[] permissions = {
                 Manifest.permission.INTERNET,
