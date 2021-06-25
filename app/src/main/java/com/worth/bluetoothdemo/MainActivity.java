@@ -131,42 +131,49 @@ public class MainActivity extends AppCompatActivity {
         });
 
         wifi.setOnClickListener(v -> {
-            String password = et3.getText().toString().trim();
-            if (!TextUtils.isEmpty(password)) {
-                // 此时可以loading展示--自行替换就可以了
-                LogHelper.toast("此时可以loading展示", 300);
+            if (isGetWifiFail) {
+                LogHelper.toast("第一次获取wifi信息失败，请退出后再次进来尝试，或者切换个wifi", 200);
 
-                EspHelper.INSTANCE.executeBroadcast(list -> {        //  获取到广播到的设备连接信息
-                    // 此时可以loading销毁--自行替换就可以了
-                    LogHelper.toast("此时可以结束loading", 400);
+            } else {
+                String password = et3.getText().toString().trim();
+                if (!TextUtils.isEmpty(password)) {
+                    // 此时可以loading展示--自行替换就可以了
+                    LogHelper.toast("此时可以loading展示", 300);
 
-                    if (list == null) {
-                        Log.e(TAG, "list == null");
-                    } else {
-                        for (IEsptouchResult item : list) {
-                            if (item != null) {
-                                Log.e(TAG, "\t getBssid:" + item.getBssid()   //  设备的mac地址
-                                        + "\t isSuc:" + item.isSuc()                //  任务是否执行成功
-                                        + "\t isCancelled:" + item.isCancelled()    //  是否被用户手动取消了
-                                );
+                    EspHelper.INSTANCE.executeBroadcast(list -> {        //  获取到广播到的设备连接信息
+                        // 此时可以loading销毁--自行替换就可以了
+                        LogHelper.toast("此时可以结束loading", 400);
 
-                                //  ip地址--InetAddress里面还有很多信息，可以debug或者打印出来，看需要什么不？
-                                InetAddress address = item.getInetAddress();
-                                if (address != null) {
-                                    Log.e(TAG, "address:" + address.toString());
-                                } else {
-                                    Log.e(TAG, "address: == null");
+                        if (list == null) {
+                            Log.e(TAG, "list == null");
+                        } else {
+                            for (IEsptouchResult item : list) {
+                                if (item != null) {
+                                    Log.e(TAG, "\t getBssid:" + item.getBssid()   //  设备的mac地址
+                                            + "\t isSuc:" + item.isSuc()                //  任务是否执行成功
+                                            + "\t isCancelled:" + item.isCancelled()    //  是否被用户手动取消了
+                                    );
+
+                                    //  ip地址--InetAddress里面还有很多信息，可以debug或者打印出来，看需要什么不？
+                                    InetAddress address = item.getInetAddress();
+                                    if (address != null) {
+                                        Log.e(TAG, "address:" + address.toString());
+                                    } else {
+                                        Log.e(TAG, "address: == null");
+                                    }
                                 }
                             }
                         }
-                    }
-                    return null;
-                }, password);
-            } else {
-                LogHelper.toast("wifi密码不可为空", 200);
+                        return null;
+                    }, password);
+                } else {
+                    LogHelper.toast("wifi密码不可为空", 200);
+                }
             }
         });
     }
+
+    private boolean isGetWifiFail = true;
 
     private void initObserver() {
         LDBus.INSTANCE.observer2(EVENT_TO_APP, (eventKey, objectParams) -> {
@@ -195,14 +202,20 @@ public class MainActivity extends AppCompatActivity {
                         if (objectParams != null && objectParams instanceof StateResult) {
                             StateResult wifiInfo = (StateResult) objectParams;
                             String mSsidByte = new String(wifiInfo.ssidBytes);
-                            String info = "\t wifi名称:" + wifiInfo.ssid
-                                    + "\t wifi名称对应的byte，解析后:" + mSsidByte
-                                    + "\t wifi的mac地址:" + wifiInfo.bssid
-                                    + "\t message:" + wifiInfo.message
-                                    + "\t is5G:" + wifiInfo.is5G
-                                    + "\t address:" + wifiInfo.address
-                                    + "\t wifiConnected:" + wifiInfo.wifiConnected;
-                            tvWifiInfo.setText(info);
+                            if (TextUtils.isEmpty(wifiInfo.ssid)) {
+                                isGetWifiFail = true;
+                                tvWifiInfo.setText("第一次获取wifi信息失败，请退出后再次进来尝试，或者切换个wifi");
+                            } else {
+                                isGetWifiFail = false;
+                                String info = "\t wifi名称:" + wifiInfo.ssid
+                                        + "\t wifi名称对应的byte，解析后:" + mSsidByte
+                                        + "\t wifi的mac地址:" + wifiInfo.bssid
+                                        + "\t message:" + wifiInfo.message
+                                        + "\t is5G:" + wifiInfo.is5G
+                                        + "\t address:" + wifiInfo.address
+                                        + "\t wifiConnected:" + wifiInfo.wifiConnected;
+                                tvWifiInfo.setText(info);
+                            }
                         }
                         break;
                     case START_SCAN:                                                                //  开始扫描-做上次扫描数据清理工作
