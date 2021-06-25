@@ -98,8 +98,7 @@
         android:layout_marginLeft="24dp"
         android:layout_marginTop="36dp"
         android:layout_marginRight="24dp"
-        android:hint="输入当前连接wifi的密码,然后进行广播"
-        android:inputType="number" />
+        android:hint="输入当前连接wifi的密码,然后进行广播" />
 
     <Button
         android:id="@+id/btn_wifi"
