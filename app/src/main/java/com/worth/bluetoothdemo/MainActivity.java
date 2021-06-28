@@ -97,7 +97,7 @@ public class MainActivity extends AppCompatActivity {
             if (checkGPSIsOpen()) {
                 if (scan) {                             //  名称过滤只是第一步，决定返回与否蓝牙设备信息还是由广播解析出来的字段决定的
                     search.setText("取消扫描");
-                    padSdkHelper.scanDevices(5000);
+                    padSdkHelper.scanDevices(true,5000);//  调试期间debug为true
 //                    padSdkHelper.scanDevices(5000, "proximity");
 //                    padSdkHelper.scanDevices(5000, "proximity", "iMEMBER");
 //                    padSdkHelper.scanDevices(5000, "proximity", "iMEMBER", "iStation");

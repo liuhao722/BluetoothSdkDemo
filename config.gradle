@@ -23,7 +23,7 @@ ext {
     ]
 
     self = [
-            "core"           : "com.github.liuhao722:YZCore:0.0.5-SNAPSHOT",
+            "core"           : "com.github.liuhao722:YZCoreSdk:0.0.1",
             "appSdk"         : "com.github.liuhao722:BlueToothWorth:0.0.3-SNAPSHOT",
     ]
 

@@ -54,13 +54,21 @@ android {
 def isDebug = true
 dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar"])
-    if (isDebug) {
-        api project(':bluetooth')
-//        api files('libs/bluetooth-release.aar')
-    } else {
-//        implementation rootProject.ext.self["core"]
-//        implementation rootProject.ext.self["appSdk"]
-    }
+//    if (isDebug) {
+//        api project(':bluetooth')
+////        api files('libs/bluetooth-release.aar')
+//    } else {
+////        implementation rootProject.ext.self["core"]
+////        implementation rootProject.ext.self["appSdk"]
+//    }
+//    core-release.aar
+//            api files('libs/core-release.aar')
+
+    api files('libs/bluetooth-release-202106281056.aar')
     implementation rootProject.ext.self["core"]
+
+//    api rootProject.ext.dependencies["appcompat"]
+//    api rootProject.ext.dependencies["appdesign"]
+
 
 }

@@ -44,6 +44,8 @@ class PadSdkHelper private constructor() {
     private var currGatt: BluetoothGatt? = null     //  当前的蓝牙特征
     private var isAlwaysScan = true                 //  是否是一直扫描
     private var isScanned = false                    //  是否手动触发扫描过
+    private var isDebug: Boolean = false
+
     /**
      * 初始化sdk
      * @param reConnectCount            重连次数
@@ -75,13 +77,16 @@ class PadSdkHelper private constructor() {
     /**
      * 搜索设备
      * 可以获取到蓝牙的名称和物理地址，在未连接之前，拿不到uuid。
+     * @param setIsDebug 是否是调试模式
      * @param bluetoothName 过滤蓝牙的前缀名称 会员卡："proximity", "iMEMBER"  基站："iStation"
      */
     @JvmOverloads
     fun scanDevices(
+        setIsDebug: Boolean = false,
         scanTimeOut: Long = 5000,
         vararg bluetoothName: String = arrayOf("proximity", "iMEMBER", "iStation")
     ) {
+        isDebug = setIsDebug
         isScanned = true
         mScanTimeOut = scanTimeOut
         initScanRule(scanTimeOut, *bluetoothName)
@@ -210,7 +215,7 @@ class PadSdkHelper private constructor() {
      * 释放资源
      */
     fun release() {
-        if (isScanned){
+        if (isScanned) {
             cancelScan()
         }
         disconnectAllDevice()
@@ -222,14 +227,27 @@ class PadSdkHelper private constructor() {
      * 配置扫描规则
      */
     private fun initScanRule(scanTimeOut: Long, vararg bluetoothName: String) {
-        val scanRuleConfig = BleScanRuleConfig.Builder()
-            .setServiceUuids(null)                                              //  只扫描指定的服务的设备，可选
-            .setDeviceName(true, *bluetoothName)                         //  只扫描指定广播名的设备，可选
-            .setDeviceMac(null)                                                 //  只扫描指定mac的设备，可选
-            .setAutoConnect(false)                                              //  连接时的autoConnect参数，可选，默认false
-            .setScanTimeOut(scanTimeOut)                                        //  扫描超时时间，可选，默认10秒
-            .build()
-        BleManager.getInstance().initScanRule(scanRuleConfig)
+
+
+
+        if (isDebug){                                                                               //  全部扫描
+            val scanRuleConfig = BleScanRuleConfig.Builder()
+                .setServiceUuids(null)
+                .setDeviceMac(null)                                                                 //  只扫描指定mac的设备，可选
+                .setAutoConnect(false)                                                              //  连接时的autoConnect参数，可选，默认false
+                .setScanTimeOut(scanTimeOut)                                                        //  扫描超时时间，可选，默认10秒
+                .build()
+            BleManager.getInstance().initScanRule(scanRuleConfig)
+        }else{                                                                                      //  只扫描指定的服务的设备，可选
+            val scanRuleConfig = BleScanRuleConfig.Builder()
+                .setDeviceName(true, *bluetoothName)                                         //  只扫描指定广播名的设备，可选
+                .setServiceUuids(null)
+                .setDeviceMac(null)                                                                 //  只扫描指定mac的设备，可选
+                .setAutoConnect(false)                                                              //  连接时的autoConnect参数，可选，默认false
+                .setScanTimeOut(scanTimeOut)                                                        //  扫描超时时间，可选，默认10秒
+                .build()
+            BleManager.getInstance().initScanRule(scanRuleConfig)
+        }
     }
 
     /**

@@ -41,10 +41,10 @@ class ParseHelper private constructor() {
 
         val result = HexUtil.formatHexString(temp) //  状态信息
 
-        Log.e("解析到广播有效内容部分", "状态信息:${result.substring(0, 4)}")
+//        Log.e("解析到广播有效内容部分", "状态信息:${result.substring(0, 4)}")
 //        Log.e("info", "产品id:${result.substring(4, 8)}")
 //        Log.e("info", "mac地址:${result.substring(8, 20)}")
-//        Log.e("解析到广播有效内容部分：", result)
+        Log.e("解析到设备广播有效内容部分前12位：", result)
         return result
 
     }
@@ -118,6 +118,7 @@ class ParseHelper private constructor() {
         return devices?.filter { device ->
             var find = false
             var result = parseRecord(device.scanRecord)
+
             result?.let {
                 result = it.substring(0, 2)
                 val content = it.subSequence(2, it.length)
