@@ -77,7 +77,7 @@ class PadSdkHelper private constructor() {
     /**
      * 搜索设备
      * 可以获取到蓝牙的名称和物理地址，在未连接之前，拿不到uuid。
-     * @param setIsDebug 是否是调试模式
+     * @param setIsDebug 是否是调试模式，如果是调试模式全部进行展示列表数据
      * @param bluetoothName 过滤蓝牙的前缀名称 会员卡："proximity", "iMEMBER"  基站："iStation"
      */
     @JvmOverloads
@@ -147,13 +147,29 @@ class PadSdkHelper private constructor() {
             }
         }
     }
-
+    /**
+     * 写入到设备中
+     */
+    fun writeToDevices(bd: BleDevice, data: ByteArray) {
+//        判断设备
+//        bd.device.address
+//        currGatt?.device?.address
+        currGatt?.let { gatt ->
+            val service = ParseHelper.instance.findService(gatt)
+            service?.let { service ->
+                val character = ParseHelper.instance.findCharacteristic(service)
+                character?.let {
+                    write(bd, service.uuid, character?.uuid, data)
+                }
+            }
+        }
+    }
     /**
      *  在不扩大MTU和扩大MTU的无效性的情况下，发送超过20字节的长数据时需要分包。该参数boolean split表示是否使用报文传递；
      *  write不带boolean split参数的方法默认将数据分包20多个字节。
      *  在onWriteSuccess回调方法上：current表示当前发送的包数，total表示本次的总包数据，justWrite表示刚刚发送成功的包。
      */
-    fun write(bd: BleDevice, uuidS: UUID, uuidW: UUID, data: ByteArray) {
+    internal fun write(bd: BleDevice, uuidS: UUID, uuidW: UUID, data: ByteArray) {
         PadSdkGlobalHandler.ins().mHandler.get()?.postDelayed({
             BleManager.getInstance()
                 .write(
@@ -227,9 +243,6 @@ class PadSdkHelper private constructor() {
      * 配置扫描规则
      */
     private fun initScanRule(scanTimeOut: Long, vararg bluetoothName: String) {
-
-
-
         if (isDebug){                                                                               //  全部扫描
             val scanRuleConfig = BleScanRuleConfig.Builder()
                 .setServiceUuids(null)

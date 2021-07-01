@@ -23,6 +23,7 @@ import com.espressif.iot.esptouch.IEsptouchResult;
 import com.espressif.iot.esptouch.bean.StateResult;
 import com.worth.bluetooth.business.enter.PadSdkHelper;
 import com.worth.bluetooth.business.utils.ParseHelper;
+import com.worth.framework.base.core.utils.L;
 import com.worth.framework.base.core.utils.LDBus;
 
 import java.net.InetAddress;
@@ -95,9 +96,9 @@ public class MainActivity extends AppCompatActivity {
         search.setOnClickListener(v -> {
             checkBluetooth();
             if (checkGPSIsOpen()) {
-                if (scan) {                             //  名称过滤只是第一步，决定返回与否蓝牙设备信息还是由广播解析出来的字段决定的
+                if (scan) {                                                                         //  名称过滤只是第一步，决定返回与否蓝牙设备信息还是由广播解析出来的字段决定的
                     search.setText("取消扫描");
-                    padSdkHelper.scanDevices(true,5000);//  调试期间debug为true
+                    padSdkHelper.scanDevices(true,5000);                    //  调试期间debug为true
 //                    padSdkHelper.scanDevices(5000, "proximity");
 //                    padSdkHelper.scanDevices(5000, "proximity", "iMEMBER");
 //                    padSdkHelper.scanDevices(5000, "proximity", "iMEMBER", "iStation");
@@ -133,7 +134,6 @@ public class MainActivity extends AppCompatActivity {
         wifi.setOnClickListener(v -> {
             if (isGetWifiFail) {
                 LogHelper.toast("第一次获取wifi信息失败，请退出后再次进来尝试，或者切换个wifi", 200);
-
             } else {
                 String password = et3.getText().toString().trim();
                 if (!TextUtils.isEmpty(password)) {
@@ -145,11 +145,11 @@ public class MainActivity extends AppCompatActivity {
                         LogHelper.toast("此时可以结束loading", 400);
 
                         if (list == null) {
-                            Log.e(TAG, "list == null");
+                            L.e(TAG, "list == null");
                         } else {
                             for (IEsptouchResult item : list) {
                                 if (item != null) {
-                                    Log.e(TAG, "\t getBssid:" + item.getBssid()   //  设备的mac地址
+                                    L.e(TAG, "\t getBssid:" + item.getBssid()   //  设备的mac地址
                                             + "\t isSuc:" + item.isSuc()                //  任务是否执行成功
                                             + "\t isCancelled:" + item.isCancelled()    //  是否被用户手动取消了
                                     );
@@ -157,9 +157,9 @@ public class MainActivity extends AppCompatActivity {
                                     //  ip地址--InetAddress里面还有很多信息，可以debug或者打印出来，看需要什么不？
                                     InetAddress address = item.getInetAddress();
                                     if (address != null) {
-                                        Log.e(TAG, "address:" + address.toString());
+                                        L.e(TAG, "address:" + address.toString());
                                     } else {
-                                        Log.e(TAG, "address: == null");
+                                        L.e(TAG, "address: == null");
                                     }
                                 }
                             }
@@ -189,13 +189,13 @@ public class MainActivity extends AppCompatActivity {
                             boolean isCanConnectionOrPair = ParseHelper.Companion.getInstance().isCanConnectionOrPair(objectParams.toString());
                             boolean isFactoryState = ParseHelper.Companion.getInstance().isFactoryState(objectParams.toString());
                             boolean isContainEvent = ParseHelper.Companion.getInstance().isContainEvent(objectParams.toString());
-                            Log.e(TAG, "状态信息--->2位：" + state);
-                            Log.e(TAG, "产品Id--->2位：" + productId);
-                            Log.e(TAG, "macId--->6位：" + macId);
-                            Log.e(TAG, "版本号--->最大7.15：" + versionCode);
-                            Log.e(TAG, "是否能被连接或配对--->：" + isCanConnectionOrPair);
-                            Log.e(TAG, "是否是出厂状态，未配对--->：" + isFactoryState);
-                            Log.e(TAG, "是否包含Event--->：" + isContainEvent);
+                            L.e(TAG, "状态信息--->2位：" + state);
+                            L.e(TAG, "产品Id--->2位：" + productId);
+                            L.e(TAG, "macId--->6位：" + macId);
+                            L.e(TAG, "版本号--->最大7.15：" + versionCode);
+                            L.e(TAG, "是否能被连接或配对--->：" + isCanConnectionOrPair);
+                            L.e(TAG, "是否是出厂状态，未配对--->：" + isFactoryState);
+                            L.e(TAG, "是否包含Event--->：" + isContainEvent);
                         }
                         break;
                     case WIFI_INFO:
@@ -267,27 +267,27 @@ public class MainActivity extends AppCompatActivity {
                         break;
 
                     case CLICK:                                                                     //  会员卡单击事件回调
-                        Log.e(TAG, "app-收到会员卡单击事件");
+                        L.e(TAG, "app-收到会员卡单击事件");
                         break;
                     case DOUBLE_CLICK:                                                              //  会员卡双击事件回调
-                        Log.e(TAG, "app-收到会员卡双击事件");
+                        L.e(TAG, "app-收到会员卡双击事件");
                         break;
 
                     case WRITE_OK:                                                                  //  写入成功
-                        Log.e(TAG, "app-收到写入会员卡数据成功事件");
+                        L.e(TAG, "app-收到写入会员卡数据成功事件");
                         break;
                     case WRITE_FAIL:                                                                //  写入失败
-                        Log.e(TAG, "app-收到写入会员卡数据失败事件");
+                        L.e(TAG, "app-收到写入会员卡数据失败事件");
                         break;
 
                     case PAIR_OK:                                                                   //  配对成功
-                        Log.e(TAG, "app-收到与会员卡配对成功事件");
+                        L.e(TAG, "app-收到与会员卡配对成功事件");
                         break;
                     case PAIR_FAIL:                                                                 //  配对失败
-                        Log.e(TAG, "app-收到与会员卡配对失败事件");
+                        L.e(TAG, "app-收到与会员卡配对失败事件");
                         break;
                     case PAIR_TIME_OUT:                                                             //  配对超时
-                        Log.e(TAG, "app-收到与会员卡配对超时事件");
+                        L.e(TAG, "app-收到与会员卡配对超时事件");
                         break;
 
                 }
