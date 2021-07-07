@@ -26,18 +26,18 @@ class ParseHelper private constructor() {
         val temp = ByteArray(11)
         temp[0] = scanRecord[5]             //  包头信息-区分是蓝牙还是基站
 
-        temp[0] = scanRecord[6]             //  状态信息
-        temp[1] = scanRecord[7]             //  状态信息
+        temp[1] = scanRecord[6]             //  状态信息
+        temp[2] = scanRecord[7]             //  状态信息
 
-        temp[2] = scanRecord[8]             //  产品id
-        temp[3] = scanRecord[9]             //  产品id
+        temp[3] = scanRecord[8]             //  产品id
+        temp[4] = scanRecord[9]             //  产品id
 
-        temp[4] = scanRecord[10]            //  mac地址
-        temp[5] = scanRecord[11]            //  mac地址
-        temp[6] = scanRecord[12]            //  mac地址
-        temp[7] = scanRecord[13]            //  mac地址
-        temp[8] = scanRecord[14]            //  mac地址
-        temp[9] = scanRecord[15]            //  mac地址
+        temp[5] = scanRecord[10]            //  mac地址
+        temp[6] = scanRecord[11]            //  mac地址
+        temp[7] = scanRecord[12]            //  mac地址
+        temp[8] = scanRecord[13]            //  mac地址
+        temp[9] = scanRecord[14]            //  mac地址
+        temp[10] = scanRecord[15]           //  mac地址
 
         val result = HexUtil.formatHexString(temp) //  状态信息
 
