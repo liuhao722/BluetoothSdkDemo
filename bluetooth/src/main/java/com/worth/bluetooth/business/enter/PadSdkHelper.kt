@@ -25,7 +25,10 @@ import com.worth.bluetooth.business.utils.ParseHelper
 import com.worth.framework.base.core.storage.MeKV
 import com.worth.framework.base.core.utils.LDBus
 import com.worth.framework.base.core.utils.application
+import io.reactivex.Observable
+import io.reactivex.android.schedulers.AndroidSchedulers
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 
 /**
@@ -40,28 +43,28 @@ class PadSdkHelper private constructor() {
     private var scanResultListTemp: List<BleDevice> = arrayListOf()
     private var mScanTimeOut: Long = 3456L          //  扫描超时时间
 
-    private var conn = false                        //  当前的链接状态
     private var currGatt: BluetoothGatt? = null     //  当前的蓝牙特征
-    private var isAlwaysScan = true                 //  是否是一直扫描
-    private var isScanned = false                    //  是否手动触发扫描过
-    private var isDebug: Boolean = false
+    private var isClickedScanBtn = false            //  是否手动触发扫描过
+    private var isDebugConfig: Boolean = false
+    private var isPhoneType: Boolean = true
+    private val defScanTime = 3000L                 //  默认扫描一次蓝牙设备的间隔时间
 
     /**
      * 初始化sdk
      * @param reConnectCount            重连次数
      * @param reConnectCountInterval    重连时间间隔
+     * @param stopScanIntervalTime      扫描一次到下一次的时间间隔--单蓝牙设备的  默认30秒一次
      * @param connectOverTime           链接超时时间
-     * @param alwaysScan                是否是一直扫描~false：默认不一直扫描,连接成功后就不再扫描了
-     *                                                true：连接成功后也一直扫描，对应还要扫描基站因为
      */
     @JvmOverloads
     fun initPadSdk(
         reConnectCount: Int = 1,
-        reConnectCountInterval: Long = 5000,
-        connectOverTime: Long = 20000,
-        alwaysScan: Boolean = true
+        reConnectCountInterval: Long = 5_000,
+        stopScanIntervalTime: Long = 30_000,
+        connectOverTime: Long = 20_000,
+        isPhone: Boolean = true
     ): PadSdkHelper {
-        isAlwaysScan = alwaysScan
+        isPhoneType = isPhone
         context?.let {
             BleManager.getInstance().init(it)
             EspHelper.initSdk(it)
@@ -70,7 +73,8 @@ class PadSdkHelper private constructor() {
             .enableLog(true)
             .setReConnectCount(reConnectCount, reConnectCountInterval)
             .setConnectOverTime(connectOverTime)
-            .operateTimeout = 5000
+            .operateTimeout = 5_000
+        initStopScanIntervalTime(stopScanIntervalTime)
         return this
     }
 
@@ -83,11 +87,11 @@ class PadSdkHelper private constructor() {
     @JvmOverloads
     fun scanDevices(
         setIsDebug: Boolean = false,
-        scanTimeOut: Long = 5000,
+        scanTimeOut: Long = defScanTime,
         vararg bluetoothName: String = arrayOf("proximity", "iMEMBER", "iStation")
     ) {
-        isDebug = setIsDebug
-        isScanned = true
+        isDebugConfig = setIsDebug
+        isClickedScanBtn = true
         mScanTimeOut = scanTimeOut
         initScanRule(scanTimeOut, *bluetoothName)
         scan()
@@ -147,6 +151,7 @@ class PadSdkHelper private constructor() {
             }
         }
     }
+
     /**
      * 写入到设备中
      */
@@ -164,6 +169,7 @@ class PadSdkHelper private constructor() {
             }
         }
     }
+
     /**
      *  在不扩大MTU和扩大MTU的无效性的情况下，发送超过20字节的长数据时需要分包。该参数boolean split表示是否使用报文传递；
      *  write不带boolean split参数的方法默认将数据分包20多个字节。
@@ -216,7 +222,6 @@ class PadSdkHelper private constructor() {
      * 如果调用该方法，如果还在扫描状态，则立即结束，并回调该onScanFinished方法。
      */
     fun cancelScan() {
-        initScanRule(mScanTimeOut, "iStation")
         BleManager.getInstance().cancelScan()
     }
 
@@ -231,7 +236,7 @@ class PadSdkHelper private constructor() {
      * 释放资源
      */
     fun release() {
-        if (isScanned) {
+        if (isClickedScanBtn) {
             cancelScan()
         }
         disconnectAllDevice()
@@ -243,7 +248,7 @@ class PadSdkHelper private constructor() {
      * 配置扫描规则
      */
     private fun initScanRule(scanTimeOut: Long, vararg bluetoothName: String) {
-        if (isDebug){                                                                               //  全部扫描
+        if (isDebugConfig) {                                                                        //  全部扫描
             val scanRuleConfig = BleScanRuleConfig.Builder()
                 .setServiceUuids(null)
                 .setDeviceMac(null)                                                                 //  只扫描指定mac的设备，可选
@@ -251,9 +256,12 @@ class PadSdkHelper private constructor() {
                 .setScanTimeOut(scanTimeOut)                                                        //  扫描超时时间，可选，默认10秒
                 .build()
             BleManager.getInstance().initScanRule(scanRuleConfig)
-        }else{                                                                                      //  只扫描指定的服务的设备，可选
+        } else {                                                                                    //  只扫描指定的服务的设备，可选
             val scanRuleConfig = BleScanRuleConfig.Builder()
-                .setDeviceName(true, *bluetoothName)                                         //  只扫描指定广播名的设备，可选
+                .setDeviceName(
+                    true,
+                    *bluetoothName
+                )                                         //  只扫描指定广播名的设备，可选
                 .setServiceUuids(null)
                 .setDeviceMac(null)                                                                 //  只扫描指定mac的设备，可选
                 .setAutoConnect(false)                                                              //  连接时的autoConnect参数，可选，默认false
@@ -271,24 +279,16 @@ class PadSdkHelper private constructor() {
         if (BleManager.getInstance().isConnected(bd)) return
         BleManager.getInstance().connect(bd, object : BleGattCallback() {
             override fun onStartConnect() {
-                if (!isAlwaysScan) {
-                    cancelScan()
-                }
-                conn = false
+                cancelScan()
                 LDBus.sendSpecial2(EVENT_TO_APP, START_CONN, bd)
             }
 
             override fun onConnectFail(bd: BleDevice, ex: BleException) {
-                scan()
-                conn = false
                 LDBus.sendSpecial2(EVENT_TO_APP, CONN_FAIL, ex)
             }
 
             override fun onConnectSuccess(bd: BleDevice, gatt: BluetoothGatt, status: Int) {
-                if (!isAlwaysScan) {
-                    cancelScan()
-                }
-                conn = true
+                cancelScan()
                 currGatt = gatt
                 LDBus.sendSpecial2(EVENT_TO_APP, CONN_OK, gatt)
                 val service = ParseHelper.instance.findService(gatt)
@@ -312,9 +312,7 @@ class PadSdkHelper private constructor() {
             }
 
             override fun onDisConnected(disC: Boolean, b: BleDevice, g: BluetoothGatt, s: Int) {
-                conn = false
                 Log.e(TAG, "当前设备已断开连接")
-                scan()
                 LDBus.sendSpecial2(EVENT_TO_APP, DIS_CONN, g)
             }
         })
@@ -326,7 +324,7 @@ class PadSdkHelper private constructor() {
         }
 
         override fun onScanning(bleDevice: BleDevice?) {
-            bleDevice?.run {
+            ParseHelper.instance.checkDevice(bleDevice)?.run {
                 LDBus.sendSpecial2(EVENT_TO_APP, SCANNING, this)
             }
         }
@@ -340,12 +338,7 @@ class PadSdkHelper private constructor() {
             } ?: run {
                 LDBus.sendSpecial2(EVENT_TO_APP, SCAN_FINISH, mutableListOf<BleDevice>())
             }
-
-            if (!isAlwaysScan) {
-                if (!conn) {
-                    scan()
-                }
-            } else {
+            if (!isPhoneType) {     //  pad模式的时候，会一直扫描，但中间不会有数据的传输 只是做扫描处理
                 scan()
             }
         }
@@ -447,6 +440,17 @@ class PadSdkHelper private constructor() {
             val blueTooth = Intent(Settings.ACTION_BLUETOOTH_SETTINGS)
             activity.startActivity(blueTooth)
         }
+    }
+
+    /**
+     * @param stopScanIntervalTime 扫描间隔时间，单位毫秒
+     */
+    private fun initStopScanIntervalTime(stopScanIntervalTime: Long) {
+        Observable.interval(stopScanIntervalTime, TimeUnit.MILLISECONDS)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe {
+                scan()
+            }
     }
 
     /**

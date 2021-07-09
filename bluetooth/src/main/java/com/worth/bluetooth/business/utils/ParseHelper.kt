@@ -22,7 +22,7 @@ class ParseHelper private constructor() {
     /**
      * 解析对应的状态，进行设备信息的确定
      */
-    internal fun parseRecord(scanRecord: ByteArray): String? {
+    fun parseRecord(scanRecord: ByteArray): String? {
         val temp = ByteArray(11)
         temp[0] = scanRecord[5]             //  包头信息-区分是蓝牙还是基站
 
@@ -44,7 +44,7 @@ class ParseHelper private constructor() {
 //        Log.e("解析到广播有效内容部分", "状态信息:${result.substring(0, 4)}")
 //        Log.e("info", "产品id:${result.substring(4, 8)}")
 //        Log.e("info", "mac地址:${result.substring(8, 20)}")
-        Log.e("解析到设备广播有效内容部分前12位：", result)
+        Log.e("解析到设备广播有效内容部分：", result)
         return result
 
     }
@@ -118,47 +118,21 @@ class ParseHelper private constructor() {
         return devices?.filter { device ->
             var find = false
             var result = parseRecord(device.scanRecord)
-
             result?.let {
                 result = it.substring(0, 2)
                 val content = it.subSequence(2, it.length)
                 result?.let { type ->
                     when {
-                        type.startsWith(I_STATION, true) -> {                           //  基站广播
-                            find = false
-                            LDBus.sendSpecial2(
-                                EVENT_TO_APP,
-                                STATION_RESULT,
-                                content
-                            )               //  返回给app 状态信息2byte 产品id2byte mac地址6byte
-                        }
                         type.startsWith(VIP_CARD, true) -> {                            //  vip卡广播
                             content?.run {
                                 when {
                                     startsWith(AFTER_PAIRED) -> {
-//                            connectionAndNotify(bleDevice, true)                                  //  应要求关闭
                                         Log.e(TAG, "配对成功后设备发送的广播-应要求已关闭自动链接功能，需要用户手动在app列表中点击")
                                         find = true
                                     }
                                     startsWith(LONG_PRESS) -> {
                                         Log.e(TAG, "长按10秒配对的广播")
-//                            connectionAndNotify(bleDevice, false)                                 //  执行配对流程--关闭，扫描时候如果是未配对的状态下，不进行数据的返回
                                         find = true
-                                    }
-                                    startsWith(DOUBLE_CLICK_CONN4)
-                                            || startsWith(DOUBLE_CLICK_DIS_CONN5)
-                                            || startsWith(DOUBLE_CLICK_DIS_CONN7) -> {
-                                        if (!FastSendIntercept.doubleSend()) {
-                                            LDBus.sendSpecial2(EVENT_TO_APP, DOUBLE_CLICK, device)
-                                            Log.e(TAG, "有效事件---->已连接时候——双击的广播")
-                                        } else {
-                                            Log.e(TAG, "20秒内收到重复双击广播信号，只处理一次服务请求")
-                                        }
-                                        find = false
-                                    }
-                                    else -> {
-                                        Log.e(TAG, "未配对过，需要用户长按进行配对后，才能扫描到")
-                                        find = false
                                     }
                                 }
                             }
@@ -168,6 +142,61 @@ class ParseHelper private constructor() {
             }
             find
         }
+    }
+
+    /**
+     * 扫描结果发现是长按的事件且未连接该设备
+     */
+    internal fun checkDevice(device: BleDevice?): BleDevice? {
+        var result = device?.scanRecord?.let { parseRecord(it) }
+        device?.let { LDBus.sendSpecial2(EVENT_TO_APP, ALL_FILTER_DEVICE, it) }
+
+        result?.let {
+            result = it.substring(0, 2)
+            val content = it.subSequence(2, it.length)
+            result?.let { type ->
+                when {
+                    type.startsWith(I_STATION, true) -> {                               //  基站广播
+                        if (!FastSendIntercept.stationDoubleSend()) {
+                            LDBus.sendSpecial2(EVENT_TO_APP, STATION_RESULT, content)               //  返回给app 状态信息2byte 产品id2byte mac地址6byte
+                        }else{
+                            Log.e(TAG, "10秒内收到重复基站广播信号，只处理一次服务请求")
+                        }
+                    }
+                    type.startsWith(VIP_CARD, true) -> {                                //  vip卡广播
+                        content?.run {
+                            when {
+                                startsWith(AFTER_PAIRED) -> {
+                                    Log.e(TAG, "配对成功后设备发送的广播-应要求已关闭自动链接功能，需要用户手动在app列表中点击")
+                                    return device
+                                }
+                                startsWith(LONG_PRESS) -> {
+                                    Log.e(TAG, "长按10秒配对的广播")
+                                    return device
+                                }
+                                startsWith(DOUBLE_CLICK_CONN4)
+                                        || startsWith(DOUBLE_CLICK_DIS_CONN5)
+                                        || startsWith(DOUBLE_CLICK_DIS_CONN7) -> {
+                                    if (!FastSendIntercept.doubleClickDoubleSend()) {
+                                        device?.let { bleDevice ->  LDBus.sendSpecial2(EVENT_TO_APP, DOUBLE_CLICK, bleDevice) }
+                                        Log.e(TAG, "有效事件---->已连接时候——双击的广播")
+                                    } else {
+                                        Log.e(TAG, "20秒内收到重复双击广播信号，只处理一次服务请求")
+                                    }
+                                }
+                                else -> {
+                                    Log.e(TAG, "未配对过，需要用户长按进行配对后，才能扫描到")
+                                }
+                            }
+                        }
+                    }
+                    else -> {
+                        Log.e(TAG, "啥也不是！")
+                    }
+                }
+            }
+        }
+        return null
     }
 
     /**
@@ -201,7 +230,6 @@ class ParseHelper private constructor() {
     fun isCanConnectionOrPair(scanRecordStr: String?): Boolean {
         scanRecordStr?.run {
             var numB = hexToB(substring(0, 2))  //  得到二进制的数据
-            val result1 = "${numB[0]}"
             return numB[0].equals("1")
         }
         return false
@@ -215,11 +243,11 @@ class ParseHelper private constructor() {
     fun isFactoryState(scanRecordStr: String?): Boolean {
         scanRecordStr?.run {
             var numB = hexToB(substring(0, 2))  //  得到二进制的数据
-            val result1 = "${numB[1]}"
             return numB[0].equals("1")
         }
         return false
     }
+
     /**
      * 是否包含event
      * @return true为包含
@@ -228,7 +256,6 @@ class ParseHelper private constructor() {
     fun isContainEvent(scanRecordStr: String?): Boolean {
         scanRecordStr?.run {
             var numB = hexToB(substring(0, 2))  //  得到二进制的数据
-            val result1 = "${numB[2]}"
             return numB[0].equals("1")
         }
         return false
@@ -239,9 +266,7 @@ class ParseHelper private constructor() {
      */
     private fun hexToB(num: String): String {
         val i10 = Integer.parseInt(num, 16)
-//        println("十六进制：$num = 十进制$i10")
         var s2 = Integer.toBinaryString(i10)
-//        println("十进制$i10 = 二进制：$s2 ")
         while (s2.length < 8) {
             s2 = "0$s2"
         }
@@ -276,7 +301,6 @@ class ParseHelper private constructor() {
         }
         return ""
     }
-
 
     /**
      * 对象单例

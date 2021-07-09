@@ -30,6 +30,7 @@ import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.ALL_FILTER_DEVICE;
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.CLICK;
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.CONN_FAIL;
 import static com.worth.bluetooth.business.gloable.PadToAppEventKeysKt.CONN_OK;
@@ -59,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
 
     private Button search, conn, disConn, led, wifi;
     private EditText et1, et2, et3;
-    private TextView tvWifiInfo, tvBluetoothList;
+    private TextView tvWifiInfo, tvBluetoothList, tvWifiLog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,7 +74,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initSdk() {
-        padSdkHelper = PadSdkHelper.Companion.getInstance().initPadSdk();
+        padSdkHelper = PadSdkHelper.Companion.getInstance().initPadSdk(
+                1,
+                5_000,
+                30_000,
+                20_000,
+                true
+        );
     }
 
     private void initView() {
@@ -88,6 +95,7 @@ public class MainActivity extends AppCompatActivity {
         et2 = findViewById(R.id.et_interval);
         et3 = findViewById(R.id.et_wifi_password);
 
+        tvWifiLog = findViewById(R.id.tv_wifi_log);
         tvWifiInfo = findViewById(R.id.tv_wifi_info);
         tvBluetoothList = findViewById(R.id.tv_result_list);
     }
@@ -98,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
             if (checkGPSIsOpen()) {
                 if (scan) {                                                                         //  名称过滤只是第一步，决定返回与否蓝牙设备信息还是由广播解析出来的字段决定的
                     search.setText("取消扫描");
-                    padSdkHelper.scanDevices(true,5000);                    //  调试期间debug为true
+                    padSdkHelper.scanDevices(true, 5000);                    //  调试期间debug为true
 //                    padSdkHelper.scanDevices(5000, "proximity");
 //                    padSdkHelper.scanDevices(5000, "proximity", "iMEMBER");
 //                    padSdkHelper.scanDevices(5000, "proximity", "iMEMBER", "iStation");
@@ -173,6 +181,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    StringBuilder sb = new StringBuilder();
     private boolean isGetWifiFail = true;
 
     private void initObserver() {
@@ -219,7 +228,8 @@ public class MainActivity extends AppCompatActivity {
                         }
                         break;
                     case START_SCAN:                                                                //  开始扫描-做上次扫描数据清理工作
-                        // 可做扫描的loading弹窗，但未连接情况下 是一直循环在扫描 所以不太合适！
+                        // loading展示
+
                         break;
                     case SCANNING:                                                                  //  扫描中-可添加到自定义的list中 每次扫描到就展示到自定义的adapter中
                         if (objectParams != null && objectParams instanceof BleDevice) {
@@ -289,7 +299,20 @@ public class MainActivity extends AppCompatActivity {
                     case PAIR_TIME_OUT:                                                             //  配对超时
                         L.e(TAG, "app-收到与会员卡配对超时事件");
                         break;
+                    case ALL_FILTER_DEVICE:
+                        if (objectParams != null && objectParams instanceof BleDevice) {
+                            BleDevice device = (BleDevice) objectParams;
+                            sb.append("设备名称:" + device.getName() + "\t设备mac:" + device.getMac());
 
+                            byte[] scanRecord = device.getScanRecord();
+                            if (scanRecord != null) {
+                                String parseResult = ParseHelper.Companion.getInstance().parseRecord(scanRecord);
+                                sb.append(" \t设备广播有效内容部分:" + parseResult);
+                            }
+                            sb.append("\n");
+                            tvWifiLog.setText(sb.toString());
+                        }
+                        break;
                 }
             }
             return null;

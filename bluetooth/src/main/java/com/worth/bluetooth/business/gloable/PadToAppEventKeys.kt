@@ -31,5 +31,7 @@ const val DOUBLE_CLICK = 0x20_000_302                                           
 const val STATION_RESULT = 0x20_000_400                                                             //  基站返回的数据
 const val WIFI_INFO = 0x20_000_401                                                                  //  wifi返回的信息
 
+const val ALL_FILTER_DEVICE = 0x20_000_501                                                          //  所有符合过滤要求的设备信息
+
 
 

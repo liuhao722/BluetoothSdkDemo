@@ -82,6 +82,8 @@ dependencies {
     api rootProject.ext.httpDependencies["okhttp"]
     api rootProject.ext.httpDependencies["converter-gson"]
     api rootProject.ext.httpDependencies["adapter-rxjava2"]
+    api rootProject.ext.httpDependencies["rxjava"]
+    api rootProject.ext.httpDependencies["rxandroid"]
 
     api rootProject.ext.dependencies["ARouter-api"]
     kapt rootProject.ext.dependencies["ARouter-compiler"]
