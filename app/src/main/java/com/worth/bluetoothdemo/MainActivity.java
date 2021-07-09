@@ -205,6 +205,16 @@ public class MainActivity extends AppCompatActivity {
                             L.e(TAG, "是否能被连接或配对--->：" + isCanConnectionOrPair);
                             L.e(TAG, "是否是出厂状态，未配对--->：" + isFactoryState);
                             L.e(TAG, "是否包含Event--->：" + isContainEvent);
+                            sb.append("扫描到的是基站:" +"状态信息--->2位：" + state+
+                                    "产品Id--->2位：" + productId+
+                                    "macId--->6位：" + macId+
+                                    "版本号--->最大7.15：" + versionCode+
+                                    "是否能被连接或配对--->：" + isCanConnectionOrPair+
+                                    "是否是出厂状态，未配对--->：" + isFactoryState+
+                                    "是否包含Event--->：" + isContainEvent
+                            );
+                            sb.append("\n");
+                            tvWifiLog.setText(sb.toString());
                         }
                         break;
                     case WIFI_INFO:
