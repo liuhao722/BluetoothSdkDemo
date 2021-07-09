@@ -121,6 +121,11 @@
         android:textSize="8sp"
         tools:text="当前蓝牙信息" />
 
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:background="#4f00" />
+
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -128,12 +133,12 @@
         <TextView
             android:id="@+id/tv_wifi_log"
             android:layout_width="match_parent"
-            android:layout_height="64dp"
+            android:layout_height="match_parent"
             android:layout_marginLeft="24dp"
             android:layout_marginTop="4dp"
             android:layout_marginRight="24dp"
             android:textSize="8sp"
-            tools:text="当前蓝牙信息" />
+            tools:text="蓝牙扫描到结果的信息" />
 
     </ScrollView>
 </LinearLayout>
