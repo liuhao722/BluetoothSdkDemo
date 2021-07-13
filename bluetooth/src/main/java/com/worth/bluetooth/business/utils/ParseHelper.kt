@@ -183,17 +183,24 @@ class ParseHelper private constructor() {
                                         || startsWith(DOUBLE_CLICK_DIS_CONN5)
                                         || startsWith(DOUBLE_CLICK_DIS_CONN7) -> {
                                     if (!FastSendIntercept.doubleClickDoubleSend()) {
-                                        if (substring(length - 6,length - 4) == EVENT_ID_CLICK){
-                                            if (substring(length - 2,length) == EVENT_ID_CLICK_01){   //  单击，事件不进行捕获
-                                                L.e(TAG, "点击事件-但不会进行事件的回传给app-广播形式的，只有建立通道才会进行回传")
-                                            }else if(substring(length - 2,length) == EVENT_ID_CLICK_02){  //  双击进行发送
-                                                device?.let { bleDevice ->  LDBus.sendSpecial2(EVENT_TO_APP, DOUBLE_CLICK, bleDevice) }
-                                                L.e(TAG, "有效事件---->已连接时候——双击的广播")
-                                            }else{
-                                                L.e(TAG, "点击的其他事件-非双击-也非单击")
+                                        when (EVENT_ID_CLICK) {                                     //  是点击事件
+                                            substring(length - 6,length - 4) -> {
+                                                when {
+                                                    substring(length - 2,length) == EVENT_ID_CLICK_01 -> {   //  单击，事件不进行捕获
+                                                        L.e(TAG, "点击事件-但不会进行事件的回传给app-广播形式的，只有建立通道才会进行回传")
+                                                    }
+                                                    substring(length - 2,length) == EVENT_ID_CLICK_02 -> {  //  双击进行发送
+                                                        device?.let { bleDevice ->  LDBus.sendSpecial2(EVENT_TO_APP, DOUBLE_CLICK, bleDevice) }
+                                                        L.e(TAG, "有效事件---->双击的广播")
+                                                    }
+                                                    else -> {
+                                                        L.e(TAG, "点击的其他事件-非双击-也非单击")
+                                                    }
+                                                }
                                             }
-                                        }else{
-                                            L.e(TAG, "非点击事件")
+                                            else -> {
+                                                L.e(TAG, "非点击事件")
+                                            }
                                         }
                                 
                                     } else {
