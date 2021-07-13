@@ -23,6 +23,7 @@ import com.worth.bluetooth.business.gloable.*
 import com.worth.bluetooth.business.utils.PadSdkGlobalHandler
 import com.worth.bluetooth.business.utils.ParseHelper
 import com.worth.framework.base.core.storage.MeKV
+import com.worth.framework.base.core.utils.L
 import com.worth.framework.base.core.utils.LDBus
 import com.worth.framework.base.core.utils.application
 import io.reactivex.Observable
@@ -48,6 +49,7 @@ class PadSdkHelper private constructor() {
     private var isDebugConfig: Boolean = false
     private var isPhoneType: Boolean = true
     private val defScanTime = 3000L                 //  默认扫描一次蓝牙设备的间隔时间
+    private var mStopScanIntervalTime: Long = 0;
 
     /**
      * 初始化sdk
@@ -65,6 +67,7 @@ class PadSdkHelper private constructor() {
         isPhone: Boolean = true
     ): PadSdkHelper {
         isPhoneType = isPhone
+        mStopScanIntervalTime = stopScanIntervalTime
         context?.let {
             BleManager.getInstance().init(it)
             EspHelper.initSdk(it)
@@ -74,7 +77,6 @@ class PadSdkHelper private constructor() {
             .setReConnectCount(reConnectCount, reConnectCountInterval)
             .setConnectOverTime(connectOverTime)
             .operateTimeout = 5_000
-        initStopScanIntervalTime(stopScanIntervalTime)
         return this
     }
 
@@ -91,10 +93,14 @@ class PadSdkHelper private constructor() {
         vararg bluetoothName: String = arrayOf("proximity", "iMEMBER", "iStation")
     ) {
         isDebugConfig = setIsDebug
+        isCanceled = false
         isClickedScanBtn = true
         mScanTimeOut = scanTimeOut
         initScanRule(scanTimeOut, *bluetoothName)
         scan()
+        if (isPhoneType) {
+            initStopScanIntervalTime(mStopScanIntervalTime)
+        }
     }
 
     internal fun scan() {
@@ -217,11 +223,15 @@ class PadSdkHelper private constructor() {
     internal val connectedDevices: List<BleDevice>?
         get() = BleManager.getInstance().allConnectedDevice
 
+    private var isCanceled: Boolean = false
+
     /**
      * 取消扫描--但不能真正的停止 还需要扫描基站的广播！！！哎！！！
      * 如果调用该方法，如果还在扫描状态，则立即结束，并回调该onScanFinished方法。
      */
     fun cancelScan() {
+        isCanceled = true
+        L.e(TAG, "cancelScan")
         BleManager.getInstance().cancelScan()
     }
 
@@ -330,6 +340,7 @@ class PadSdkHelper private constructor() {
         }
 
         override fun onScanFinished(scanResultList: MutableList<BleDevice>?) {
+            L.e(TAG, "onScanFinished")
             scanResultList?.run {
                 val result = ParseHelper.instance.checkDeviceList(this)
                 if (scanResultListTemp.isNotEmpty() && scanResultListTemp == scanResultList) return
@@ -338,7 +349,8 @@ class PadSdkHelper private constructor() {
             } ?: run {
                 LDBus.sendSpecial2(EVENT_TO_APP, SCAN_FINISH, mutableListOf<BleDevice>())
             }
-            if (!isPhoneType) {     //  pad模式的时候，会一直扫描，但中间不会有数据的传输 只是做扫描处理
+            if (!isPhoneType && !isCanceled) {     //  pad模式的时候，会一直扫描，但中间不会有数据的传输 只是做扫描处理
+                L.e(TAG, "scan")
                 scan()
             }
         }
@@ -449,7 +461,9 @@ class PadSdkHelper private constructor() {
         Observable.interval(stopScanIntervalTime, TimeUnit.MILLISECONDS)
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe {
-                scan()
+                if (!isCanceled) {
+                    scan()
+                }
             }
     }
 

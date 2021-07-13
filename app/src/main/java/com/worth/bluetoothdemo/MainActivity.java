@@ -79,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
                 5_000,
                 30_000,
                 20_000,
-                true
+                false
         );
     }
 
