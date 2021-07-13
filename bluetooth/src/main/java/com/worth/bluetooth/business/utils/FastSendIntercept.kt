@@ -8,7 +8,7 @@ package com.worth.bluetooth.business.utils
  */
 object FastSendIntercept {
     private var lastDoubleClickTime: Long = 0
-    private const val doubleClickIntervalTime = 20_000L //  间隔
+    private const val doubleClickIntervalTime = 10_000L //  间隔
 
     /**
      * 快速发送双击会员卡事件的拦截
