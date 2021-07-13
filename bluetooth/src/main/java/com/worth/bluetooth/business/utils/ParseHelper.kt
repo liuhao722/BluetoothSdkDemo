@@ -7,6 +7,7 @@ import android.util.Log
 import com.clj.fastble.data.BleDevice
 import com.clj.fastble.utils.HexUtil
 import com.worth.bluetooth.business.gloable.*
+import com.worth.framework.base.core.utils.L
 import com.worth.framework.base.core.utils.LDBus
 
 
@@ -23,7 +24,7 @@ class ParseHelper private constructor() {
      * 解析对应的状态，进行设备信息的确定
      */
     fun parseRecord(scanRecord: ByteArray): String? {
-        val temp = ByteArray(11)
+        val temp = ByteArray(14)
         temp[0] = scanRecord[5]             //  包头信息-区分是蓝牙还是基站
 
         temp[1] = scanRecord[6]             //  状态信息
@@ -39,12 +40,16 @@ class ParseHelper private constructor() {
         temp[9] = scanRecord[14]            //  mac地址
         temp[10] = scanRecord[15]           //  mac地址
 
+        temp[11] = scanRecord[16]           //  mac地址
+        temp[12] = scanRecord[17]           //  mac地址
+        temp[13] = scanRecord[18]           //  mac地址
+
         val result = HexUtil.formatHexString(temp) //  状态信息
 
-//        Log.e("解析到广播有效内容部分", "状态信息:${result.substring(0, 4)}")
-//        Log.e("info", "产品id:${result.substring(4, 8)}")
-//        Log.e("info", "mac地址:${result.substring(8, 20)}")
-        Log.e("解析到设备广播有效内容部分：", result)
+//        L.e("解析到广播有效内容部分", "状态信息:${result.substring(0, 4)}")
+//        L.e("info", "产品id:${result.substring(4, 8)}")
+//        L.e("info", "mac地址:${result.substring(8, 20)}")
+        L.e("解析到设备广播有效内容部分：", result)
         return result
 
     }
@@ -127,11 +132,11 @@ class ParseHelper private constructor() {
                             content?.run {
                                 when {
                                     startsWith(AFTER_PAIRED) -> {
-                                        Log.e(TAG, "配对成功后设备发送的广播-应要求已关闭自动链接功能，需要用户手动在app列表中点击")
+                                        L.e(TAG, "配对成功后设备发送的广播-应要求已关闭自动链接功能，需要用户手动在app列表中点击")
                                         find = true
                                     }
                                     startsWith(LONG_PRESS) -> {
-                                        Log.e(TAG, "长按10秒配对的广播")
+                                        L.e(TAG, "长按10秒配对的广播")
                                         find = true
                                     }
                                 }
@@ -160,38 +165,49 @@ class ParseHelper private constructor() {
                         if (!FastSendIntercept.stationDoubleSend()) {
                             LDBus.sendSpecial2(EVENT_TO_APP, STATION_RESULT, content)               //  返回给app 状态信息2byte 产品id2byte mac地址6byte
                         }else{
-                            Log.e(TAG, "10秒内收到重复基站广播信号，只处理一次服务请求")
+                            L.e(TAG, "10秒内收到重复基站广播信号，只处理一次服务请求")
                         }
                     }
                     type.startsWith(VIP_CARD, true) -> {                                //  vip卡广播
                         content?.run {
                             when {
                                 startsWith(AFTER_PAIRED) -> {
-                                    Log.e(TAG, "配对成功后设备发送的广播-应要求已关闭自动链接功能，需要用户手动在app列表中点击")
+                                    L.e(TAG, "配对成功后设备发送的广播-应要求已关闭自动链接功能，需要用户手动在app列表中点击")
                                     return device
                                 }
                                 startsWith(LONG_PRESS) -> {
-                                    Log.e(TAG, "长按10秒配对的广播")
+                                    L.e(TAG, "长按10秒配对的广播")
                                     return device
                                 }
                                 startsWith(DOUBLE_CLICK_CONN4)
                                         || startsWith(DOUBLE_CLICK_DIS_CONN5)
                                         || startsWith(DOUBLE_CLICK_DIS_CONN7) -> {
                                     if (!FastSendIntercept.doubleClickDoubleSend()) {
-                                        device?.let { bleDevice ->  LDBus.sendSpecial2(EVENT_TO_APP, DOUBLE_CLICK, bleDevice) }
-                                        Log.e(TAG, "有效事件---->已连接时候——双击的广播")
+                                        if (substring(length - 6,length - 4) == EVENT_ID_CLICK){
+                                            if (substring(length - 2,length) == EVENT_ID_CLICK_01){   //  单击，事件不进行捕获
+                                                L.e(TAG, "点击事件-但不会进行事件的回传给app-广播形式的，只有建立通道才会进行回传")
+                                            }else if(substring(length - 2,length) == EVENT_ID_CLICK_02){  //  双击进行发送
+                                                device?.let { bleDevice ->  LDBus.sendSpecial2(EVENT_TO_APP, DOUBLE_CLICK, bleDevice) }
+                                                L.e(TAG, "有效事件---->已连接时候——双击的广播")
+                                            }else{
+                                                L.e(TAG, "点击的其他事件-非双击-也非单击")
+                                            }
+                                        }else{
+                                            L.e(TAG, "非点击事件")
+                                        }
+                                
                                     } else {
-                                        Log.e(TAG, "20秒内收到重复双击广播信号，只处理一次服务请求")
+                                        L.e(TAG, "20秒内收到重复双击广播信号，只处理一次服务请求")
                                     }
                                 }
                                 else -> {
-                                    Log.e(TAG, "未配对过，需要用户长按进行配对后，才能扫描到")
+                                    L.e(TAG, "未配对过，需要用户长按进行配对后，才能扫描到")
                                 }
                             }
                         }
                     }
                     else -> {
-                        Log.e(TAG, "啥也不是！")
+                        L.e(TAG, "啥也不是！")
                     }
                 }
             }
