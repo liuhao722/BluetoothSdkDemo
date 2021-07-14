@@ -25,7 +25,10 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
 
-
+    <!-- LOG开关1为显示，其余不显示，必须为数字 -->
+    <meta-data
+        android:name="LOG_ENABLE"
+        android:value="1" />
     <application>
 
     </application>

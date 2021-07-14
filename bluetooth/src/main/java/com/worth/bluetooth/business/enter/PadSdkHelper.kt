@@ -23,7 +23,6 @@ import com.worth.bluetooth.business.gloable.*
 import com.worth.bluetooth.business.utils.PadSdkGlobalHandler
 import com.worth.bluetooth.business.utils.ParseHelper
 import com.worth.framework.base.core.storage.MeKV
-import com.worth.framework.base.core.utils.L
 import com.worth.framework.base.core.utils.LDBus
 import com.worth.framework.base.core.utils.application
 import io.reactivex.Observable
@@ -48,7 +47,7 @@ class PadSdkHelper private constructor() {
     private var isClickedScanBtn = false            //  是否手动触发扫描过
     private var isDebugConfig: Boolean = false
     private var isPhoneType: Boolean = true
-    private val defScanTime = 3000L                 //  默认扫描一次蓝牙设备的间隔时间
+    private val defScanTime = 5000L                 //  默认扫描一次蓝牙设备的间隔时间
     private var mStopScanIntervalTime: Long = 0;
 
     /**
@@ -90,23 +89,31 @@ class PadSdkHelper private constructor() {
     fun scanDevices(
         setIsDebug: Boolean = false,
         scanTimeOut: Long = defScanTime,
-        vararg bluetoothName: String = arrayOf("proximity", "iMEMBER", "iStation")
+        vararg bluetoothName: String = arrayOf("proximity", "iMEMBER", "iMember","iStation")
     ) {
         isDebugConfig = setIsDebug
         isCanceled = false
         isClickedScanBtn = true
         mScanTimeOut = scanTimeOut
         initScanRule(scanTimeOut, *bluetoothName)
-        scan()
+        scan(true)
         if (isPhoneType) {
             initStopScanIntervalTime(mStopScanIntervalTime)
         }
     }
 
-    internal fun scan() {
-        BleManager.getInstance().scan(bleScanCallback)
+    /**
+     * 用户手动点击或者是iphone的模式走直接扫描
+     */
+    internal fun scan(scanFromUser: Boolean) {
+        if(scanFromUser){
+            BleManager.getInstance().scan(bleScanCallback)
+        }else{
+            PadSdkGlobalHandler.ins().mHandler.get()?.postDelayed(runnable,3000)
+        }
     }
 
+    private val runnable: Runnable = Runnable { BleManager.getInstance().scan(bleScanCallback) }
     /**
      * 连接设备-检查设备连接,用户手动点击某个wifi进行连接
      */
@@ -193,12 +200,12 @@ class PadSdkHelper private constructor() {
                     object : BleWriteCallback() {
                         override fun onWriteSuccess(curr: Int, total: Int, data: ByteArray?) {
                             LDBus.sendSpecial2(EVENT_TO_APP, WRITE_OK, "")
-                            Log.e(TAG, "写入数据到设备成功")
+                            log(TAG, "写入数据到设备成功")
                         }
 
                         override fun onWriteFailure(exception: BleException?) {
                             LDBus.sendSpecial2(EVENT_TO_APP, WRITE_FAIL, "")
-                            Log.e(TAG, "写入数据到设备失败")
+                            log(TAG, "写入数据到设备失败")
                         }
                     })
         }, 500)
@@ -231,7 +238,6 @@ class PadSdkHelper private constructor() {
      */
     fun cancelScan() {
         isCanceled = true
-        L.e(TAG, "cancelScan")
         BleManager.getInstance().cancelScan()
     }
 
@@ -322,7 +328,7 @@ class PadSdkHelper private constructor() {
             }
 
             override fun onDisConnected(disC: Boolean, b: BleDevice, g: BluetoothGatt, s: Int) {
-                Log.e(TAG, "当前设备已断开连接")
+                log(TAG, "当前设备已断开连接")
                 LDBus.sendSpecial2(EVENT_TO_APP, DIS_CONN, g)
             }
         })
@@ -334,14 +340,19 @@ class PadSdkHelper private constructor() {
         }
 
         override fun onScanning(bleDevice: BleDevice?) {
-            ParseHelper.instance.checkDevice(bleDevice)?.run {
-                LDBus.sendSpecial2(EVENT_TO_APP, SCANNING, this)
+//            log("扫描中",bleDevice?.name + bleDevice?.mac)
+            bleDevice?.name?.run {
+//                log("扫描不为空的name",bleDevice?.name + bleDevice?.mac)
+                ParseHelper.instance.checkDevice(bleDevice)?.run {
+                    LDBus.sendSpecial2(EVENT_TO_APP, SCANNING, this)
+                }
             }
         }
 
         override fun onScanFinished(scanResultList: MutableList<BleDevice>?) {
-            L.e(TAG, "onScanFinished")
-            scanResultList?.run {
+            scanResultList?.filter {
+                it.name != null
+            }?.run {
                 val result = ParseHelper.instance.checkDeviceList(this)
                 if (scanResultListTemp.isNotEmpty() && scanResultListTemp == scanResultList) return
                 scanResultListTemp = result
@@ -350,8 +361,7 @@ class PadSdkHelper private constructor() {
                 LDBus.sendSpecial2(EVENT_TO_APP, SCAN_FINISH, mutableListOf<BleDevice>())
             }
             if (!isPhoneType && !isCanceled) {     //  pad模式的时候，会一直扫描，但中间不会有数据的传输 只是做扫描处理
-                L.e(TAG, "scan")
-                scan()
+                scan(false)
             }
         }
     }
@@ -365,7 +375,7 @@ class PadSdkHelper private constructor() {
         character: BluetoothGattCharacteristic?
     ) {
         var result = HexUtil.formatHexString(data)
-        Log.e("handleNotify-result", result)
+        log("$TAG handleNotify-result", result)
         if (result.startsWith(RESULT_FIRST)) {
             result = result.substring(2)
             when {
@@ -374,16 +384,16 @@ class PadSdkHelper private constructor() {
                     when {
                         result.startsWith(RESULT_DATA_FAIL) -> {
                             LDBus.sendSpecial2(EVENT_TO_APP, PAIR_FAIL, bd)
-                            Log.e(TAG, "配对错误")
+                            log(TAG, "配对错误")
                         }
                         result.startsWith(RESULT_DATA_OK) -> {
                             LDBus.sendSpecial2(EVENT_TO_APP, PAIR_OK, bd)
-                            Log.e(TAG, "配对成功")
+                            log(TAG, "配对成功")
                         }
                         result.startsWith(RESULT_DATA_TIME_OUT) -> {
                             LDBus.sendSpecial2(EVENT_TO_APP, PAIR_TIME_OUT, bd)
                             character?.uuid?.let { write(bd, uuid, it, failToDeviceFlash) }
-                            Log.e(TAG, "配对超时")
+                            log(TAG, "配对超时")
                         }
                     }
                 }
@@ -392,23 +402,23 @@ class PadSdkHelper private constructor() {
                     result?.run {
                         val resultInt = result.toInt()
                         if (resultInt == 9) {
-                            Log.e(TAG, "请求macId")
+                            log(TAG, "请求macId")
                             character?.uuid?.let { write(bd, uuid, it, resultOk) }
                         } else {
-                            Log.e(TAG, "校验失败")
+                            log(TAG, "校验失败")
                             character?.uuid?.let { write(bd, uuid, it, resultFail) }
                         }
                     }
                 }
                 result.startsWith(RESULT_DATA_TYPE_3) -> {                                          //  返回了mac地址
                     result = result.substring(4)
-                    Log.e(TAG, "设备返回的mac地址:$result")
+                    log(TAG, "设备返回的mac地址:$result")
                     MeKV.setConnMacId(result)
                     character?.uuid?.let { write(bd, uuid, it, successToDeviceFlash) }
                 }
                 result.startsWith(RESULT_DATA_TYPE_4) -> {
                     //  返回了单击的事件
-                    Log.e(TAG, "设备触发了单击的事件")
+                    log(TAG, "设备触发了单击的事件")
                     character?.uuid?.let { write(bd, uuid, it, toDeviceClickResult) }
                     LDBus.sendSpecial2(EVENT_TO_APP, CLICK, bd)
                 }
@@ -462,7 +472,7 @@ class PadSdkHelper private constructor() {
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe {
                 if (!isCanceled) {
-                    scan()
+                    scan(true)
                 }
             }
     }
@@ -477,4 +487,10 @@ class PadSdkHelper private constructor() {
     private object SingletonHolder {
         val holder = PadSdkHelper()
     }
+}
+
+
+fun log(tag:String, msg:String){
+        Log.e(tag, msg)
+//        L.e(tag, msg)
 }

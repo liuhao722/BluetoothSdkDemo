@@ -106,10 +106,10 @@ public class MainActivity extends AppCompatActivity {
             if (checkGPSIsOpen()) {
                 if (scan) {                                                                         //  名称过滤只是第一步，决定返回与否蓝牙设备信息还是由广播解析出来的字段决定的
                     search.setText("取消扫描");
-                    padSdkHelper.scanDevices(true, 5000);                    //  调试期间debug为true
-//                    padSdkHelper.scanDevices(5000, "proximity");
-//                    padSdkHelper.scanDevices(5000, "proximity", "iMEMBER");
-//                    padSdkHelper.scanDevices(5000, "proximity", "iMEMBER", "iStation");
+                    padSdkHelper.scanDevices(false, 5000);                    //  调试期间debug为true
+//                    padSdkHelper.scanDevices(3000, "proximity");
+//                    padSdkHelper.scanDevices(3000, "proximity", "iMEMBER");
+//                    padSdkHelper.scanDevices(3000, "proximity", "iMEMBER", "iStation");
                 } else {
                     search.setText("开始扫描蓝牙设备");
                     padSdkHelper.cancelScan();
@@ -244,6 +244,11 @@ public class MainActivity extends AppCompatActivity {
                     case SCANNING:                                                                  //  扫描中-可添加到自定义的list中 每次扫描到就展示到自定义的adapter中
                         if (objectParams != null && objectParams instanceof BleDevice) {
                             mBleDevice = (BleDevice) objectParams;
+                            Log.e("扫描到单个设备：",
+                                    mBleDevice.getName()
+                                    +mBleDevice.getMac()
+                                    +mBleDevice.getScanRecord()
+                            );
                         }
                         break;
                     case SCAN_FINISH:                                                               //  扫描结束-数据列表展示
@@ -310,18 +315,18 @@ public class MainActivity extends AppCompatActivity {
                         L.e(TAG, "app-收到与会员卡配对超时事件");
                         break;
                     case ALL_FILTER_DEVICE:
-                        if (objectParams != null && objectParams instanceof BleDevice) {
-                            BleDevice device = (BleDevice) objectParams;
-                            sb.append("设备名称:" + device.getName() + "\t设备mac:" + device.getMac());
-
-                            byte[] scanRecord = device.getScanRecord();
-                            if (scanRecord != null) {
-                                String parseResult = ParseHelper.Companion.getInstance().parseRecord(scanRecord);
-                                sb.append(" \t设备广播有效内容部分:" + parseResult);
-                            }
-                            sb.append("\n");
-                            tvWifiLog.setText(sb.toString());
-                        }
+//                        if (objectParams != null && objectParams instanceof BleDevice) {
+//                            BleDevice device = (BleDevice) objectParams;
+//                            sb.append("设备名称:" + device.getName() + "\t设备mac:" + device.getMac());
+//
+//                            byte[] scanRecord = device.getScanRecord();
+//                            if (scanRecord != null) {
+//                                String parseResult = ParseHelper.Companion.getInstance().parseRecord(scanRecord);
+//                                sb.append(" \t设备广播有效内容部分:" + parseResult);
+//                            }
+//                            sb.append("\n");
+//                            tvWifiLog.setText(sb.toString());
+//                        }
                         break;
                 }
             }

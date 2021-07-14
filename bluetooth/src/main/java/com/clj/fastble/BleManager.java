@@ -47,15 +47,15 @@ public class BleManager {
     private MultipleBluetoothController multipleBluetoothController;
     private BluetoothManager bluetoothManager;
 
-    public static final int DEFAULT_SCAN_TIME = 10000;
-    private static final int DEFAULT_MAX_MULTIPLE_DEVICE = 7;
+    public static final int DEFAULT_SCAN_TIME = 5000;//官方原有给的是10秒
+    private static final int DEFAULT_MAX_MULTIPLE_DEVICE = 100;//官方原有给的是7
     private static final int DEFAULT_OPERATE_TIME = 5000;
     private static final int DEFAULT_CONNECT_RETRY_COUNT = 0;
     private static final int DEFAULT_CONNECT_RETRY_INTERVAL = 5000;
     private static final int DEFAULT_MTU = 23;
     private static final int DEFAULT_MAX_MTU = 512;
     private static final int DEFAULT_WRITE_DATA_SPLIT_COUNT = 20;
-    private static final int DEFAULT_CONNECT_OVER_TIME = 10000;
+    private static final int DEFAULT_CONNECT_OVER_TIME = 5000;//官方原有给的是10秒
 
     private int maxConnectCount = DEFAULT_MAX_MULTIPLE_DEVICE;
     private int operateTimeout = DEFAULT_OPERATE_TIME;

@@ -3,11 +3,10 @@ package com.worth.bluetooth.business.utils
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattService
-import android.util.Log
 import com.clj.fastble.data.BleDevice
 import com.clj.fastble.utils.HexUtil
+import com.worth.bluetooth.business.enter.log
 import com.worth.bluetooth.business.gloable.*
-import com.worth.framework.base.core.utils.L
 import com.worth.framework.base.core.utils.LDBus
 
 
@@ -46,10 +45,10 @@ class ParseHelper private constructor() {
 
         val result = HexUtil.formatHexString(temp) //  状态信息
 
-//        L.e("解析到广播有效内容部分", "状态信息:${result.substring(0, 4)}")
-//        L.e("info", "产品id:${result.substring(4, 8)}")
-//        L.e("info", "mac地址:${result.substring(8, 20)}")
-        L.e("解析到设备广播有效内容部分：", result)
+//        log("解析到广播有效内容部分", "状态信息:${result.substring(0, 4)}")
+//        log("info", "产品id:${result.substring(4, 8)}")
+//        log("info", "mac地址:${result.substring(8, 20)}")
+        log("解析到设备广播有效内容部分：", result)
         return result
 
     }
@@ -132,11 +131,11 @@ class ParseHelper private constructor() {
                             content?.run {
                                 when {
                                     startsWith(AFTER_PAIRED) -> {
-                                        L.e(TAG, "配对成功后设备发送的广播-应要求已关闭自动链接功能，需要用户手动在app列表中点击")
+                                        log(TAG, "配对成功后设备发送的广播-应要求已关闭自动链接功能，需要用户手动在app列表中点击")
                                         find = true
                                     }
                                     startsWith(LONG_PRESS) -> {
-                                        L.e(TAG, "长按10秒配对的广播")
+                                        log(TAG, "长按10秒配对的广播")
                                         find = true
                                     }
                                 }
@@ -165,56 +164,42 @@ class ParseHelper private constructor() {
                         if (!FastSendIntercept.stationDoubleSend()) {
                             LDBus.sendSpecial2(EVENT_TO_APP, STATION_RESULT, content)               //  返回给app 状态信息2byte 产品id2byte mac地址6byte
                         }else{
-                            L.e(TAG, "10秒内收到重复基站广播信号，只处理一次服务请求")
+                            log(TAG, "10秒内收到重复基站广播信号，只处理一次服务请求")
                         }
                     }
                     type.startsWith(VIP_CARD, true) -> {                                //  vip卡广播
                         content?.run {
                             when {
                                 startsWith(AFTER_PAIRED) -> {
-                                    L.e(TAG, "配对成功后设备发送的广播-应要求已关闭自动链接功能，需要用户手动在app列表中点击")
+                                    log(TAG, "点击事件---配对成功后设备发送的广播-应要求已关闭自动链接功能，需要用户手动在app列表中点击")
                                     return device
                                 }
                                 startsWith(LONG_PRESS) -> {
-                                    L.e(TAG, "长按10秒配对的广播")
+                                    log(TAG, "点击事件---长按10秒配对的广播")
                                     return device
                                 }
                                 startsWith(DOUBLE_CLICK_CONN4)
                                         || startsWith(DOUBLE_CLICK_DIS_CONN5)
                                         || startsWith(DOUBLE_CLICK_DIS_CONN7) -> {
-                                    if (!FastSendIntercept.doubleClickDoubleSend()) {
                                         when (EVENT_ID_CLICK) {                                     //  是点击事件
-                                            substring(length - 6,length - 4) -> {
-                                                when(substring(length - 2,length)) {
-                                                    EVENT_ID_CLICK_01 -> {   //  单击，事件不进行捕获
-                                                        L.e(TAG, "点击事件-但不会进行事件的回传给app-广播形式的，只有建立通道才会进行回传")
+                                            substring(length - 4,length - 2) -> {
+                                                when(substring(length - 2, length)) {
+                                                    EVENT_ID_CLICK_01 -> {                          //  单击，事件不进行捕获
+                                                        log(TAG, "扫描到有效事件---单击广播---但不会进行事件的回传给app-广播形式的，只有建立通道才会进行回传")
                                                     }
-                                                    EVENT_ID_CLICK_02 -> {  //  双击进行发送
+                                                    EVENT_ID_CLICK_02 -> {                          //  双击进行发送
                                                         device?.let { bleDevice ->  LDBus.sendSpecial2(EVENT_TO_APP, DOUBLE_CLICK, bleDevice) }
-                                                        L.e(TAG, "有效事件---->双击的广播")
-                                                    }
-                                                    else -> {
-                                                        L.e(TAG, "点击的其他事件-非双击-也非单击")
+                                                        log(TAG, "扫描到有效事件---双击的广播---->有效事件")
                                                     }
                                                 }
                                             }
-                                            else -> {
-                                                L.e(TAG, "非点击事件")
-                                            }
                                         }
-                                
-                                    } else {
-                                        L.e(TAG, "20秒内收到重复双击广播信号，只处理一次服务请求")
-                                    }
                                 }
                                 else -> {
-                                    L.e(TAG, "未配对过，需要用户长按进行配对后，才能扫描到")
+                                    log(TAG, "扫描到有效事件---未配对过，需要用户长按进行配对后，才能扫描到")
                                 }
                             }
                         }
-                    }
-                    else -> {
-                        L.e(TAG, "啥也不是！")
                     }
                 }
             }
