@@ -105,8 +105,8 @@ class PadSdkHelper private constructor() {
     /**
      * 用户手动点击或者是iphone的模式走直接扫描
      */
-    internal fun scan(scanFromUser: Boolean) {
-        if(scanFromUser){
+    internal fun scan(isRightAwaysToScan: Boolean) {
+        if(isRightAwaysToScan){
             BleManager.getInstance().scan(bleScanCallback)
         }else{
             PadSdkGlobalHandler.ins().mHandler.get()?.postDelayed(runnable,3000)
